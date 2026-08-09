@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Pollería Los Pelícanos | App Business</title>
+
+    <!-- Tipografías elegantes -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+    <style>
+        /* === Paleta y variables === */
+        :root{
+            --bg: #2B160D;        /* marrón oscuro de fondo */
+            --bg-2: #3A1F12;      /* variante más profunda */
+            --accent: #F5A623;    /* amarillo/dorado */
+            --accent-2: #D88916;  /* dorado secundario */
+            --cream: #F5E6C8;     /* crema para trazos */
+            --card-cream: #FFF8EC;/* fondo tarjeta */
+            --text-dark: #17100C; /* texto oscuro sobre crema */
+            --muted: rgba(245,230,200,0.65);
+            --radius: 14px;
+            --max-width: 1400px;
+            --pattern-size: 360px;
+            --nav-height: 76px;
+        }
+
+        /* === Fondo con patrón gastronómico sutil (SVG data-URI) ===
+           - Trazos lineales en --cream
+           - Opacidad muy baja para textura de marca
+        */
+        body{
+            font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            background-color: var(--bg);
+            color: #fff;
+            margin: 0;
+            padding-bottom: 140px;
+            overflow-x: hidden;
+
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='360' height='360' viewBox='0 0 360 360'><g stroke='%23F5E6C8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' fill='none' stroke-opacity='0.045'><!-- drumstick --> <path d='M24 60c10-6 22-6 34 0 8 4 14 12 14 20s-6 18-14 22c-10 5-22 4-34-4C18 90 18 74 24 60z'/> <!-- wing --> <path d='M120 36c10 2 18 8 26 16 6 6 8 14 6 22-4 12-14 20-26 20-8 0-18-6-24-14-6-10-8-22-4-32 4-8 12-14 22-12z'/> <!-- whole-bird hint --> <path d='M260 26c18 2 34 12 44 26 8 12 6 26-6 38-14 14-36 20-54 12-16-6-24-22-22-38 2-16 14-30 38-38z'/> <!-- potato --> <path d='M48 180c10-6 22-4 32 4 10 8 14 20 6 30-8 10-22 14-34 8-10-6-16-18-12-30 2-8 8-14 10-12z'/> <!-- garlic bulb --> <path d='M200 170c6-6 14-8 22-6 8 2 14 8 16 16 2 10-2 20-10 26-8 6-20 6-28-2-6-6-6-16-4-28z'/> <!-- ají (pepper) --> <path d='M320 162c6-10 14-16 22-14 6 2 10 8 10 14 0 8-6 16-12 22-8 8-20 8-28 2-6-4-6-12-2-24z'/> <!-- romero simple --> <path d='M88 260c8-10 20-14 30-10 8 4 12 12 10 18-4 10-14 18-26 18-10 0-18-8-22-14'/> <!-- small flame --> <path d='M228 280c6-10 12-16 18-18 6-2 10 0 12 6 2 6 0 12-6 20-8 10-20 10-28 4'/> </g></svg>");
+            background-repeat: repeat;
+            background-size: var(--pattern-size);
+            background-blend-mode: normal;
+        }
+
+        /* Reduce patrón en móviles */
+        @media (max-width: 576px){
+            :root{ --pattern-size: 280px; }
+        }
+
+        /* Container centrado y espaciado */
+        .site-wrap{
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 20px 28px 140px;
+        }
+
+        /* Safe surfaces: evitar patrón detrás de textos importantes */
+        .safe-surface{ background: rgba(10,8,6,0.65); padding: 12px; border-radius: 12px; }
+
+        /* === Encabezado / Logo === */
+        header.app-header{
+            padding: 18px 0 8px;
+            display:flex;
+            align-items:center;
+            gap:16px;
+            justify-content:space-between;
+        }
+
+        .brand{
+            display:flex;
+            align-items:center;
+            gap:14px;
+        }
+
+        .brand-logo{
+            display:flex;
+            align-items:baseline;
+            gap:10px;
+        }
+
+        .brand-logo img{ height:56px; width:auto; object-fit:contain; border-radius:6px; }
+        .brand-title{
+            font-family: 'Playfair Display', serif;
+            color: #FFF8EC;
+            font-size: 1.45rem;
+            line-height:1;
+            letter-spacing: -0.8px;
+            margin: 0;
+        }
+        .brand-sub{
+            font-family: 'Poppins', sans-serif;
+            color: rgba(255,248,236,0.85);
+            font-weight:600;
+            font-size: 0.9rem;
+            margin:0;
+        }
+        .brand-tagline{
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.85rem;
+            color: rgba(245,230,200,0.75);
+            margin-top:4px;
+        }
+
+        /* Dirección pequeña y no competitiva */
+        #headerText{
+            font-size: 0.78rem;
+            color: rgba(245,230,200,0.55);
+            margin:0;
+            text-align:right;
+        }
+
+        /* === Hero / Bienvenida === */
+        .hero{
+            display:flex;
+            gap:20px;
+            align-items:flex-start;
+            margin: 12px 0 18px;
+        }
+        .hero .hero-card{
+            background: linear-gradient(180deg, rgba(255,248,236,0.03), rgba(255,248,236,0.01));
+            padding: 18px;
+            border-radius: 12px;
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+            width:100%;
+            max-width:900px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+        }
+        .hero h2{
+            font-family: 'Playfair Display', serif;
+            color: #FFF8EC;
+            margin:0;
+            font-size:1.6rem;
+            letter-spacing:-0.6px;
+        }
+        .hero p.lead{
+            margin:0;
+            color: rgba(255,248,236,0.9);
+            font-size: 0.96rem;
+        }
+        .hero p.tag{
+            margin:0;
+            color: rgba(245,230,200,0.75);
+            font-size:0.86rem;
+        }
+        .hero .hero-actions{ display:flex; gap:10px; margin-top:8px; }
+
+        .btn-cta{
+            background: linear-gradient(180deg,var(--accent),var(--accent-2));
+            color: var(--bg);
+            border-radius:12px;
+            padding:8px 14px;
+            font-weight:700;
+            border:none;
+            box-shadow: 0 6px 18px rgba(216,137,22,0.12);
+            transition: transform .22s ease, box-shadow .22s ease;
+            font-size:0.95rem;
+        }
+        .btn-cta:hover{ transform: translateY(-4px); box-shadow: 0 10px 25px rgba(216,137,22,0.18); }
+
+        .btn-ghost{
+            background: transparent;
+            border: 1px solid rgba(245,230,200,0.15);
+            color: rgba(255,248,236,0.95);
+            padding:8px 12px;
+            border-radius:12px;
+            font-weight:600;
+            transition: transform .22s ease, background .22s;
+        }
+        .btn-ghost:hover{ transform: translateY(-3px); background: rgba(255,248,236,0.02); }
+
+        /* === Categorías (cápsulas elegantes) === */
+        .category-scroll{
+            display:flex;
+            overflow-x:auto;
+            gap:10px;
+            padding:12px 4px;
+        }
+        .category-scroll::-webkit-scrollbar{ display:none; }
+
+        .chip{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            padding:8px 14px;
+            border-radius:999px;
+            font-weight:600;
+            font-size:0.92rem;
+            cursor:pointer;
+            white-space:nowrap;
+            border:1px solid transparent;
+            min-height:40px;
+            background: rgba(255,255,255,0.03);
+            color: var(--cream);
+            transition: transform .18s ease, box-shadow .18s;
+        }
+        .chip i{ font-size:0.95rem; color: var(--cream); }
+
+        .chip:hover{ transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.35); }
+
+        .chip.active{
+            background: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+            box-shadow: 0 8px 22px rgba(245,166,35,0.12);
+        }
+
+        /* Inactive subtle border */
+        .chip.inactive{
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(245,230,200,0.08);
+            color: var(--cream);
+        }
+
+        /* === Grid de productos (responsive) === */
+        main.container{
+            padding: 8px 0 40px;
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+
+        #productGrid{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 18px;
+            align-items:stretch;
+        }
+
+        /* === Tarjetas de producto (crema) === */
+        .product-card{
+            background: var(--card-cream);
+            color: var(--text-dark);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(23,16,12,0.18);
+            display:flex;
+            flex-direction:column;
+            transition: transform .18s ease, box-shadow .18s ease;
+            border: 1px solid rgba(23,16,12,0.06);
+        }
+        .product-card:hover{ transform: translateY(-6px); box-shadow: 0 18px 40px rgba(23,16,12,0.22); }
+
+        .product-img{
+            width:100%;
+            aspect-ratio: 4 / 3; /* consistente */
+            object-fit: cover;
+            display:block;
+        }
+
+        .card-info{
+            padding: 12px 14px;
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+            flex:1;
+        }
+
+        .card-info h3{
+            margin:0;
+            font-family: 'Playfair Display', serif;
+            font-size:1.05rem;
+            color: var(--text-dark);
+            line-height:1.05;
+        }
+        .card-info p.desc{
+            margin:0;
+            font-size:0.85rem;
+            color: rgba(23,16,12,0.65);
+            min-height: 36px;
+        }
+
+        .card-meta{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:10px;
+        }
+
+        .price-tag{
+            font-weight:800;
+            color: var(--accent-2);
+            background: transparent;
+            padding:6px 8px;
+            border-radius:10px;
+            font-size:1rem;
+        }
+
+        .btn-add{
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
+            padding:8px 12px;
+            border-radius:12px;
+            font-weight:700;
+            cursor:pointer;
+            transition: transform .22s ease, box-shadow .22s;
+            box-shadow: 0 6px 18px rgba(216,137,22,0.12);
+            margin-left:auto;
+            font-size:0.95rem;
+        }
+        .btn-add:hover{ transform: translateY(-3px); box-shadow: 0 12px 28px rgba(216,137,22,0.16); }
+
+        /* Admin controls keep previous layout but lighter */
+        .admin-controls{ margin-top:8px; display:flex; gap:6px; }
+        .btn-edit, .btn-delete{ padding:6px 8px; border-radius:10px; font-size:0.82rem; }
+
+        /* === Bottom navigation refinado === */
+        .bottom-bar{
+            position: fixed;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 48px);
+            max-width: var(--max-width);
+            height: var(--nav-height);
+            background: rgba(23,16,12,0.95);
+            border-radius: 24px;
+            display:flex;
+            align-items:center;
+            justify-content:space-around;
+            padding:10px 18px;
+            border: 1px solid rgba(245,166,35,0.12);
+            z-index: 1200;
+            box-shadow: 0 12px 36px rgba(11,7,6,0.45);
+        }
+
+        .nav-link{
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            text-decoration:none;
+            gap:6px;
+            color: var(--cream);
+            font-size:0.72rem;
+            min-width:64px;
+            padding:6px 8px;
+            transition: transform .18s ease, color .18s ease;
+        }
+
+        .nav-link i{ font-size:1.18rem; color: var(--cream); display:block; }
+
+        .nav-link.active{
+            color: var(--bg);
+        }
+        .nav-link.active i{ color: var(--accent); }
+
+        .nav-link:hover{ transform: translateY(-3px); color: var(--accent); }
+        .nav-link .nav-label{ font-size:0.72rem; color: inherit; }
+
+        .badge-count{
+            position: absolute;
+            top: 6px;
+            right: 18%;
+            background: #ff3b3b;
+            width:18px; height:18px;
+            border-radius:50%;
+            color:#fff; font-size:0.65rem;
+            display:flex; align-items:center; justify-content:center;
+            border: 2px solid var(--bg);
+        }
+
+        /* Ensure bottom bar on small screens fits */
+        @media (max-width:420px){
+            .bottom-bar{ height:72px; padding:8px 12px; }
+            .nav-link{ min-width:56px; font-size:0.66rem; }
+        }
+
+        /* Misc */
+        .text-dim{ color: rgba(255,248,236,0.65); }
+        .small{ font-size:0.82rem; }
+
+        /* Image hover effect within card */
+        .product-img-wrap{ overflow:hidden; border-top-left-radius:12px; border-top-right-radius:12px; }
+        .product-img{ transition: transform .25s ease; display:block; width:100%; }
+        .product-card:hover .product-img{ transform: scale(1.03); }
+
+        /* Reduce vertical spacing */
+        h1,h2,h3,h4,h5{ margin:0; padding:0; }
+        .mb-0{ margin-bottom:0 !important; }
+
+        /* Form inputs (Swal) keep previous style but more readable */
+        .swal2-popup { border-radius: 18px !important; background: #161616 !important; color: #fff !important; }
+        .swal2-input, .swal2-select, .swal2-textarea {
+            background: rgba(255,248,236,0.04) !important;
+            color: #fff !important;
+            border: 1px solid rgba(245,230,200,0.08) !important;
+            font-weight:600 !important;
+        }
+
+        /* === Notificación lateral para administradores === */
+        .order-notif {
+            position: fixed;
+            right: 20px;
+            top: 90px;
+            width: 340px;
+            background: rgba(20,12,8,0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(245,166,35,0.35);
+            border-radius: 18px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+            z-index: 99999;
+            padding: 14px;
+            color: #fff;
+            transform: translateX(120%);
+            transition: transform 300ms cubic-bezier(.22,.9,.3,1);
+        }
+        .order-notif.show { transform: translateX(0); }
+        .order-notif .meta { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+        .order-notif h4 { margin:0; font-size:1rem; color:var(--cream); }
+        .order-notif .small { color: rgba(255,248,236,0.8); font-size:0.86rem; }
+        .order-notif .actions { display:flex; gap:8px; margin-top:10px; }
+        .btn-notif { background: transparent; border:1px solid rgba(245,230,200,0.12); color: #fff; padding:8px 12px; border-radius:10px; cursor:pointer; }
+        .btn-notif.primary { background: linear-gradient(180deg,var(--accent),var(--accent-2)); color: var(--bg); border:none; }
+        .notif-close { background:transparent; border:none; color:rgba(255,248,236,0.7); font-size:1.1rem; cursor:pointer; }
+
+        /* Drag & drop upload zone for admin */
+        .upload-zone {
+            background: var(--card-cream);
+            border: 2px dashed var(--accent-2);
+            border-radius: 18px;
+            padding: 18px;
+            color: var(--bg);
+            text-align:center;
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+            align-items:center;
+            justify-content:center;
+        }
+        .upload-zone.dragover { border-color: var(--accent); background: rgba(245,166,35,0.06); }
+        .upload-zone .hint { font-weight:700; color:var(--bg); }
+        .upload-actions { display:flex; gap:8px; margin-top:6px; }
+        .thumb-preview { width:100%; max-height:200px; object-fit:cover; border-radius:10px; border:1px solid rgba(23,16,12,0.06); }
+
+    </style>
+</head>
+<body>
+    <div class="site-wrap">
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-logo">
+                    <!-- If a logo file exists in the project, place the file at assets/logo.png and the img will show.
+                         The script below checks for that file at runtime only if you enable it. -->
+                    <!-- <img id="siteLogo" src="assets/logo.png" alt="Pollería Los Pelícanos"> -->
+                    <div>
+                        <h1 class="brand-title">POLLERÍA <span style="display:block;color:var(--accent);font-size:1.05rem;margin-top:-4px;">LOS PELÍCANOS</span></h1>
+                        <div class="brand-tagline">Pollos dorados, Pollos exquisitos</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align:right;">
+                <p id="headerText">Villa del Sur Hábitat, Mz A Lote 3</p>
+            </div>
+        </header>
+
+        <!-- HERO / Zona de bienvenida (no gigante) -->
+        <section class="hero">
+            <div class="hero-card safe-surface">
+                <div>
+                    <h2>POLLERÍA LOS PELÍCANOS</h2>
+                    <p class="lead">El sabor que reúne a todos alrededor de la mesa.</p>
+                    <p class="tag">Recetas tradicionales, pollo a la brasa preparado con cariño.</p>
+                </div>
+
+                <div class="hero-actions">
+                    <button class="btn-cta" onclick="window.app.changeTab('home')">VER MENÚ</button>
+                    <!-- "PEDIR AHORA" eliminado intencionalmente según requerimiento -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Categorías -->
+        <div class="safe-surface" style="margin-top:12px; border-radius:12px; padding:10px;">
+            <div class="category-scroll" id="catContainer">
+                <!-- Use Font Awesome icons (no emojis) -->
+                <div class="chip active" onclick="window.app.filter('todos')" data-cat="todos"><i class="fas fa-utensils"></i> Todos</div>
+                <div class="chip inactive" onclick="window.app.filter('brasas')" data-cat="brasas"><i class="fas fa-fire"></i> Brasas</div>
+                <div class="chip inactive" onclick="window.app.filter('promos')" data-cat="promos"><i class="fas fa-tags"></i> Promociones</div>
+                <div class="chip inactive" onclick="window.app.filter('extras')" data-cat="extras"><i class="fas fa-bread-slice"></i> Acompañantes</div>
+            </div>
+        </div>
+
+        <!-- Productos: grid responsive -->
+        <main class="container">
+            <div id="productGrid"></div>
+        </main>
+
+        <!-- Admin / History / Tracking containers unchanged but styled -->
+        <div id="adminContent" class="container mt-3 d-none">
+            <h5 class="text-primary fw-bold mb-3">Gestión de Pedidos Delivery</h5>
+            <div id="adminOrdersList"></div>
+        </div>
+
+        <div id="historyContent" class="container mt-3 d-none">
+            <h5 class="text-primary fw-bold mb-3">Historial de Pedidos</h5>
+            <div id="adminHistoryList"></div>
+        </div>
+
+        <div id="trackingContent" class="container mt-3 d-none">
+            <h5 class="text-primary fw-bold mb-3">Seguimiento de mi Pedido</h5>
+            <div id="myTracking"></div>
+        </div>
+
+        <!-- FAB admin (kept) -->
+        <button id="adminAddBtn" class="fab-admin d-none" onclick="window.app.openProductModal()" style="position:fixed; bottom:118px; right:22px; background:var(--accent); border:none; width:56px; height:56px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--bg); box-shadow: 0 10px 26px rgba(216,137,22,0.16);">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+
+    <!-- Bottom navigation refinado -->
+    <nav class="bottom-bar">
+        <a href="#" class="nav-link active" id="btnHome" onclick="window.app.changeTab('home')">
+            <i class="fas fa-utensils"></i>
+            <span class="nav-label">Menú</span>
+        </a>
+        
+        <a href="#" class="nav-link" id="btnCartOrOrders" onclick="window.app.handleCenterBtn()" style="position:relative;">
+            <i class="fas fa-shopping-basket" id="centerIcon"></i>
+            <span class="nav-label" id="centerText">Carrito</span>
+            <span id="cartBadge" class="badge-count" style="display:none">0</span>
+        </a>
+
+        <a href="#" class="nav-link" id="btnTracking" onclick="window.app.changeTab('tracking')">
+            <i class="fas fa-truck"></i>
+            <span class="nav-label">Seguimiento</span>
+        </a>
+
+        <a href="#" class="nav-link" onclick="window.app.adminLogin()">
+            <i class="fas fa-user-shield"></i>
+            <span class="nav-label">Admin</span>
+        </a>
+    </nav>
+
+    <!-- Notification container (empty, created here for admin notific.) -->
+    <div id="orderNotifContainer" aria-live="polite"></div>
+
+    <!-- Firebase SDKs (compat) - IMPORTANT: replace/define firebaseConfig below -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+    <!-- Scripts (sin cambios funcionales excepto donde se indica) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        /****************************************************************
+         * FIREBASE INITIALIZATION (COMPAT)
+         *
+         * IMPORTANT: Provide your firebaseConfig object in one of two ways:
+         * 1) Define `window.firebaseConfig` before this script executes (preferred).
+         * 2) Edit the firebaseConfig below and fill in your keys.
+         *
+         * The code will warn if firebaseConfig is not present and will
+         * continue to function locally (localStorage) but without network features.
+         ****************************************************************/
+        window.firebaseConfig = {
+            apiKey: "AIzaSyDmEsXuMkAarzY0Fz5-pzsynIjkN4kxJ1M",
+            authDomain: "restaurante-rs.firebaseapp.com",
+            projectId: "restaurante-rs",
+            storageBucket: "restaurante-rs.firebasestorage.app",
+            messagingSenderId: "34894722228",
+            appId: "1:34894722228\:web:8d0237c9a68b87582b53e1",
+            measurementId: "G-35G8PNBBXR"
+        };
+        (function initFirebase(){
+            try {
+                // Use existing global config if present
+                const cfg = window.firebaseConfig || null;
+
+                if(!cfg || !cfg.apiKey) {
+                    console.warn('Firebase config not found. Firestore/Storage features disabled. Define window.firebaseConfig with your project settings to enable them.');
+                    window._firebaseEnabled = false;
+                    return;
+                }
+
+                firebase.initializeApp(cfg);
+                window._firebaseEnabled = true;
+                window._db = firebase.firestore();
+                window._auth = firebase.auth();
+
+                // Optional: sign-in with custom admin credentials handled locally in adminLogin;
+                console.log('Firebase initialized.');
+            } catch(e) {
+                console.error('Firebase init error', e);
+                window._firebaseEnabled = false;
+            }
+        })();
+
+        /****************************************************************
+         * APP CLASS (modificado para:
+         * - guardar pedidos en Firestore al confirmarPedido
+         * - iniciar listener en tiempo real cuando admin inicia sesión
+         * - mostrar notificación lateral cuando llegue pedido nuevo
+         * - soporte para upload drag&drop en openProductModal (Storage)
+         ****************************************************************/
+        class PelicanosApp {
+            constructor() {
+                this.isAdmin = false;
+                this.cart = JSON.parse(localStorage.getItem('pel_cart')) || [];
+                this.cremas = JSON.parse(localStorage.getItem('pel_cremas')) || { 'MAYONESA': 0, 'ROCOTO': 0, 'KÉTCHUP': 0, 'MOSTAZA': 0 };
+                this.currentFilter = 'todos';
+
+                // local product store (kept)
+                this.products = JSON.parse(localStorage.getItem('pel_prod')) || [
+                    { id: 1, name: '1/4 Pollo a la Brasa', price: 18, desc: 'Con papas y ensalada', img: 'https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=500', cat: 'brasas' },
+                    { id: 2, name: 'Pollo Entero', price: 58, desc: 'Familiar con todo', img: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=500', cat: 'brasas' }
+                ];
+
+                this.orders = JSON.parse(localStorage.getItem('pel_orders')) || [];
+
+                // Firestore collection names (use existing if project defines them)
+                this.ORDER_COLLECTION = window.ORDER_COLLECTION_NAME || 'orders';
+                this.PRODUCTS_COLLECTION = window.PRODUCTS_COLLECTION_NAME || 'products';
+
+                // internal snapshot unsubscribe reference
+                this._ordersUnsubscribe = null;
+                this._knownOrderIds = new Set(); // to avoid duplicate notif
+
+                this.render();
+                this.updateBadge();
+            }
+            // --- COMPRIMIR IMAGEN ANTES DE GUARDAR EN FIRESTORE ---
+compressImage(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = (event) => {
+            const img = new Image();
+
+            img.onload = () => {
+                const maxWidth = 1200;
+                const maxHeight = 1200;
+
+                let width = img.width;
+                let height = img.height;
+
+                // Reducir manteniendo la proporción
+                if (width > maxWidth || height > maxHeight) {
+                    const ratio = Math.min(
+                        maxWidth / width,
+                        maxHeight / height
+                    );
+
+                    width = Math.round(width * ratio);
+                    height = Math.round(height * ratio);
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+
+                ctx.drawImage(
+                    img,
+                    0,
+                    0,
+                    width,
+                    height
+                );
+
+                // Convertir a WebP comprimido
+                const compressedImage = canvas.toDataURL(
+                    'image/webp',
+                    0.75
+                );
+
+                resolve(compressedImage);
+            };
+
+            img.onerror = () => {
+                reject(new Error('No se pudo cargar la imagen.'));
+            };
+
+            img.src = event.target.result;
+        };
+
+        reader.onerror = () => {
+            reject(new Error('No se pudo leer el archivo.'));
+        };
+
+        reader.readAsDataURL(file);
+    });
+}
+
+            // --- NAVEGACIÓN ---
+            changeTab(tab) {
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                document.getElementById('clientContent')?.classList?.add('d-none');
+                document.getElementById('adminContent')?.classList?.add('d-none');
+                document.getElementById('trackingContent')?.classList?.add('d-none');
+                document.getElementById('historyContent')?.classList?.add('d-none');
+
+                if(tab === 'home') {
+                    document.getElementById('btnHome').classList.add('active');
+                    // show main (grid is part of DOM)
+                } else if(tab === 'tracking') {
+                    document.getElementById('btnTracking').classList.add('active');
+                    document.getElementById('trackingContent').classList.remove('d-none');
+                    this.renderTracking();
+                } else if(tab === 'admin') {
+                    document.getElementById('btnCartOrOrders').classList.add('active');
+                    document.getElementById('adminContent').classList.remove('d-none');
+                    this.renderAdminOrders();
+                } else if(tab === 'history') {
+                    document.getElementById('btnTracking').classList.add('active');
+                    document.getElementById('historyContent').classList.remove('d-none');
+                    this.renderHistory();
+                }
+            }
+
+            handleCenterBtn() {
+                if(this.isAdmin) this.changeTab('admin');
+                else this.openCart();
+            }
+
+            // --- LÓGICA DE FILTROS ---
+            filter(cat) {
+                this.currentFilter = cat;
+                document.querySelectorAll('.chip').forEach(c => {
+                    const isActive = c.getAttribute('data-cat') === cat;
+                    c.classList.toggle('active', isActive);
+                    c.classList.toggle('inactive', !isActive);
+                });
+                this.render();
+            }
+
+            render() {
+                const grid = document.getElementById('productGrid');
+                const filtered = this.currentFilter === 'todos' ? this.products : this.products.filter(p => p.cat === this.currentFilter);
+                
+                grid.innerHTML = filtered.map(p => `
+                    <article class="product-card" data-id="${p.id}">
+                        <div class="product-img-wrap">
+                            <img src="${p.img}" alt="${p.name}" class="product-img">
+                        </div>
+                        <div class="card-info">
+                            <h3>${p.name}</h3>
+                            <p class="desc">${p.desc || ''}</p>
+
+                            <div class="card-meta">
+                                <div class="price-tag">S/ ${typeof p.price === 'number' ? p.price.toFixed(2) : p.price}</div>
+                                ${this.isAdmin ? `
+                                    <div style="display:flex; gap:8px;">
+                                        <button class="btn-edit btn btn-sm btn-outline-secondary" onclick="window.app.openProductModal(${p.id})">Editar</button>
+                                        <button class="btn-delete btn btn-sm btn-outline-danger" onclick="window.app.deleteProduct(${p.id})">Eliminar</button>
+                                    </div>
+                                ` : `
+                                    <button class="btn-add" onclick="window.app.addToCart(${p.id})">+ Agregar</button>
+                                `}
+                            </div>
+                        </div>
+                    </article>
+                `).join('');
+            }
+
+            // --- CARRITO Y CREMAS (sin cambios funcionales) ---
+            addToCart(id) {
+                const p = this.products.find(x => x.id === id);
+                if(!p) return;
+                let existing = this.cart.find(c => c.id === id);
+                if(existing) {
+                    existing.qty += 1;
+                } else {
+                    this.cart.push({ id: p.id, product: p, qty: 1 });
+                }
+                localStorage.setItem('pel_cart', JSON.stringify(this.cart));
+                this.updateBadge();
+
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Pedido añadido',
+                    showConfirmButton: false,
+                    timer: 1200,
+                    background: '#161616',
+                    color: '#fff'
+                });
+            }
+
+            updateBadge() {
+                const badge = document.getElementById('cartBadge');
+                const totalQty = this.cart.reduce((s, c) => s + c.qty, 0);
+                badge.style.display = totalQty ? 'flex' : 'none';
+                badge.innerText = totalQty;
+            }
+
+            async openCart() {
+                if(!this.cart.length) return Swal.fire('Carrito vacío', '', 'info');
+
+                const cartListHtml = `
+                    <div id="cartList" class="text-start mb-3" style="font-size:0.95rem; color:#fff;">
+                        ${this.cart.map(c => `
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0">
+                                <div style="max-width:65%">• ${c.product.name} (S/ ${c.product.price})</div>
+                                <div style="display:flex; align-items:center; gap:8px">
+                                    <button class="cart-qty-btn" onclick="window.app.changeQty(${c.id}, -1)">-</button>
+                                    <span id="cart-qty-${c.id}" style="min-width:22px; text-align:center; display:inline-block; color:#fff; font-weight:700">${c.qty}</span>
+                                    <button class="cart-qty-btn" onclick="window.app.changeQty(${c.id}, 1)">+</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                let totalBase = this.calculateTotal();
+
+                const { value: formValues } = await Swal.fire({
+                    title: 'Tu Pedido',
+                    html: `
+                        ${cartListHtml}
+                        <h6 class="text-primary fw-bold text-start" style="color:#FFD8A6">¿Deseas Cremas?</h6>
+                        <p class="small text-start" style="color:#fff">(1 de c/u gratis, extra S/ 0.50)</p>
+                        ${Object.keys(this.cremas).map(c => `
+                            <div class="crema-item" style="background:#222;padding:8px;border-radius:10px;margin-bottom:6px;">
+                                <span style="color:#fff;">${c}</span>
+                                <div class="crema-controls">
+                                    <button class="crema-btn" onclick="window.app.updateCrema('${c}', -1)">-</button>
+                                    <span id="qty-${c}">${this.cremas[c]}</span>
+                                    <button class="crema-btn" onclick="window.app.updateCrema('${c}', 1)">+</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                        <div class="text-end h5 mt-3" style="color:#fff;">Total: S/ <span id="cartTotal">${totalBase.toFixed(2)}</span></div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Siguiente',
+                    background: '#161616',
+                    didOpen: () => this.calculateTotal()
+                });
+
+                if(formValues) this.selectDeliveryMode();
+            }
+
+            changeQty(id, delta) {
+                const idx = this.cart.findIndex(c => c.id === id);
+                if(idx === -1) return;
+                this.cart[idx].qty = Math.max(0, this.cart[idx].qty + delta);
+                if(this.cart[idx].qty === 0) this.cart.splice(idx, 1);
+                localStorage.setItem('pel_cart', JSON.stringify(this.cart));
+                this.updateBadge();
+
+                // Update the cartList content if modal is open
+                const cartListEl = document.getElementById('cartList');
+                if(cartListEl) {
+                    cartListEl.innerHTML = this.cart.map(c => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0">
+                            <div style="max-width:65%">• ${c.product.name} (S/ ${c.product.price})</div>
+                            <div style="display:flex; align-items:center; gap:8px">
+                                <button class="cart-qty-btn" onclick="window.app.changeQty(${c.id}, -1)">-</button>
+                                <span id="cart-qty-${c.id}" style="min-width:22px; text-align:center; display:inline-block; color:#fff; font-weight:700">${c.qty}</span>
+                                <button class="cart-qty-btn" onclick="window.app.changeQty(${c.id}, 1)">+</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                const totalEl = document.getElementById('cartTotal');
+                if(totalEl) totalEl.innerText = this.calculateTotal().toFixed(2);
+            }
+
+            updateCrema(name, delta) {
+                this.cremas[name] = Math.max(0, this.cremas[name] + delta);
+                localStorage.setItem('pel_cremas', JSON.stringify(this.cremas));
+                const el = document.getElementById(`qty-${name}`);
+                if(el) el.innerText = this.cremas[name];
+                this.calculateTotal();
+            }
+
+            calculateTotal() {
+                let base = this.cart.reduce((a, b) => a + b.product.price * b.qty, 0);
+                let extraCremas = 0;
+                Object.values(this.cremas).forEach(qty => {
+                    if(qty > 1) extraCremas += (qty - 1) * 0.5;
+                });
+                const total = base + extraCremas;
+                const el = document.getElementById('cartTotal');
+                if(el) el.innerText = total.toFixed(2);
+                return total;
+            }
+
+            // --- CHECKOUT / GUARDAR PEDIDO EN FIRESTORE ---
+            async selectDeliveryMode() {
+                const { value: modo } = await Swal.fire({
+                    title: 'Modo de Entrega',
+                    input: 'select',
+                    inputOptions: { mesa: 'Comer en Local', recojo: 'Recoger en Local', delivery: 'Delivery' },
+                    confirmButtonColor: '#ff9f1c'
+                });
+
+                if(!modo) return;
+                
+                let info = '';
+                let clientData = { name: '', phone: '' };
+                if(modo === 'mesa') {
+                    const { value: mesa } = await Swal.fire({
+                        title:'Mesa #',
+                        input:'number',
+                        inputAttributes: { min: 1 },
+                        background: '#161616'
+                    });
+                    info = 'Mesa: ' + (mesa || '');
+                }
+                else if (modo === 'recojo') {
+                    const { value: datos } = await Swal.fire({
+                        title: 'Datos para Recojo',
+                        html: `<input id="swal-name" class="swal2-input" placeholder="Nombre completo">
+                               <input id="swal-phone" class="swal2-input" placeholder="Teléfono">`,
+                        preConfirm: () => {
+                            return {
+                                name: document.getElementById('swal-name').value,
+                                phone: document.getElementById('swal-phone').value
+                            };
+                        },
+                        background: '#161616'
+                    });
+                    if(!datos) return;
+                    clientData.name = datos.name || '';
+                    clientData.phone = datos.phone || '';
+                    info = `Nombre: ${clientData.name} - Tel: ${clientData.phone}`;
+                }
+                else if(modo === 'delivery') {
+                    const { value: direccion } = await Swal.fire({title:'Tu Dirección', input:'text', background: '#161616'});
+                    clientData.name = '';
+                    clientData.phone = '';
+                    info = 'Dirección: ' + (direccion || '');
+                }
+
+                // Confirm and save
+                this.confirmarPedido(modo, info, clientData);
+            }
+
+            async confirmarPedido(modo, info, clientData = {name:'', phone:''}) {
+                const total = this.calculateTotal();
+                const subtotal = this.cart.reduce((a,b)=>a+b.product.price*b.qty,0);
+                const order = {
+                    // local id (timestamp) — Firestore will add doc id. Keep local copy too.
+                    localId: Date.now(),
+                    items: this.cart.map(c => ({ id: c.id, name: c.product.name, price: c.product.price, qty: c.qty })),
+                    cremas: {...this.cremas},
+                    subtotal: subtotal,
+                    total: total,
+                    modo: modo,
+                    info: info,
+                    client: {
+                        name: clientData.name || '',
+                        phone: clientData.phone || ''
+                    },
+                    status: 'Pedido recibido', // mantenemos la nomenclatura existente
+                    fecha_local: new Date().toLocaleString()
+                };
+
+                // 1) Guardar en localStorage (existente)
+                this.orders.push(order);
+                localStorage.setItem('pel_orders', JSON.stringify(this.orders));
+
+                // 2) Guardar en Firestore si está disponible
+                if(window._firebaseEnabled && window._db) {
+                    try {
+                        // Use server timestamp and create document in collection
+                        const docRef = await window._db.collection(this.ORDER_COLLECTION).add({
+                            items: order.items,
+                            cremas: order.cremas,
+                            subtotal: order.subtotal,
+                            total: order.total,
+                            modo: order.modo,
+                            info: order.info,
+                            client: order.client,
+                            status: order.status,
+                            fecha_local: order.fecha_local,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        // Update local copy with firestore id
+                        order.id = docRef.id;
+                        // Optionally write back localStorage with id
+                        localStorage.setItem('pel_orders', JSON.stringify(this.orders));
+                        console.log('Pedido guardado en Firestore, id=', docRef.id);
+                    } catch(err) {
+                        console.error('Error guardando pedido en Firestore:', err);
+                        // show non-blocking error
+                        Swal.fire({ icon:'error', title:'No se pudo guardar en servidor', text: 'Tu pedido fue guardado localmente. Intenta nuevamente más tarde.'});
+                    }
+                } else {
+                    console.warn('Firestore no disponible, pedido guardado sólo localmente.');
+                }
+
+                // Reset cart and cremas
+                this.cart = [];
+                this.cremas = { 'MAYONESA': 0, 'ROCOTO': 0, 'KÉTCHUP': 0, 'MOSTAZA': 0 };
+                localStorage.removeItem('pel_cart');
+                localStorage.setItem('pel_cremas', JSON.stringify(this.cremas));
+                this.updateBadge();
+
+                Swal.fire('¡Pedido enviado!', 'Puedes seguirlo en la pestaña seguimiento', 'success');
+
+                // Enviar WhatsApp (opcional)
+                let text = `*NUEVO PEDIDO*%0A---%0A${order.items.map(i=>`- ${i.qty} x ${i.name}`).join('%0A')}%0A---%0A*Total:* S/ ${total.toFixed(2)}%0A*Modo:* ${modo}%0A*Detalle:* ${info}`;
+                window.open(`https://wa.me/51935700076?text=${encodeURIComponent(text)}`);
+            }
+
+            // --- ADMIN: LOGIN + INICIO DEL LISTENER EN TIEMPO REAL ---
+           async adminLogin() {
+
+    // Si ya está dentro como administrador, cerrar sesión
+    if (this.isAdmin) {
+        await firebase.auth().signOut();
+        this.isAdmin = false;
+        this.stopOrdersListener();
+        this.updateAdminUI();
+        return;
+    }
+
+    // Verificar que Firebase Authentication esté disponible
+    if (!window._firebaseEnabled || !window._auth) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Firebase no disponible',
+            text: 'No se pudo conectar con el sistema de autenticación.'
+        });
+        return;
+    }
+
+    // Formulario de acceso
+    const { value: formValues } = await Swal.fire({
+        title: 'Acceso Administrador',
+        background: '#161616',
+        color: '#fff',
+        html: `
+            <input
+                id="adminEmail"
+                class="swal2-input"
+                type="email"
+                placeholder="Correo electrónico"
+                autocomplete="email"
+            >
+
+            <input
+                id="adminPassword"
+                class="swal2-input"
+                type="password"
+                placeholder="Contraseña"
+                autocomplete="current-password"
+            >
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Iniciar sesión',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#F5A623',
+
+        preConfirm: () => {
+
+            const email = document.getElementById('adminEmail').value.trim();
+            const password = document.getElementById('adminPassword').value;
+
+            if (!email || !password) {
+                Swal.showValidationMessage(
+                    'Ingresa tu correo y contraseña'
+                );
+                return false;
+            }
+
+            return {
+                email,
+                password
+            };
+        }
+    });
+
+    if (!formValues) return;
+
+    try {
+
+        // Iniciar sesión mediante Firebase Authentication
+        const userCredential = await window._auth.signInWithEmailAndPassword(
+            formValues.email,
+            formValues.password
+        );
+
+        const user = userCredential.user;
+
+        console.log('Administrador autenticado:', user.email);
+        console.log('UID:', user.uid);
+
+        /*
+         * IMPORTANTE:
+         * Por ahora verificamos el correo autorizado.
+         * Más adelante podemos hacerlo todavía más seguro
+         * mediante un documento "users" con role: "admin".
+         */
+
+        if (user.email.toLowerCase() !== 'maytekaren2@gmail.com') {
+
+            await window._auth.signOut();
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Acceso denegado',
+                text: 'Esta cuenta no tiene permisos de administrador.'
+            });
+
+            return;
+        }
+
+        // Usuario autorizado
+        this.isAdmin = true;
+
+        this.updateAdminUI();
+
+        // Escuchar pedidos en tiempo real
+        this.startOrdersListener();
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Bienvenida, administradora',
+            text: 'Has iniciado sesión correctamente.',
+            timer: 1500,
+            showConfirmButton: false,
+            background: '#161616',
+            color: '#fff'
+        });
+
+    } catch (error) {
+
+        console.error('Error de autenticación:', error);
+
+        let mensaje = 'No se pudo iniciar sesión.';
+
+        if (error.code === 'auth/user-not-found') {
+            mensaje = 'No existe una cuenta con ese correo.';
+        }
+
+        if (error.code === 'auth/wrong-password') {
+            mensaje = 'La contraseña es incorrecta.';
+        }
+
+        if (error.code === 'auth/invalid-credential') {
+            mensaje = 'El correo o la contraseña son incorrectos.';
+        }
+
+        if (error.code === 'auth/invalid-email') {
+            mensaje = 'El correo electrónico no es válido.';
+        }
+
+        if (error.code === 'auth/too-many-requests') {
+            mensaje = 'Demasiados intentos. Espera un momento e inténtalo nuevamente.';
+        }
+
+        Swal.fire({
+            icon: 'error',
+            title: 'No se pudo iniciar sesión',
+            text: mensaje,
+            background: '#161616',
+            color: '#fff'
+        });
+    }
+}
+            updateAdminUI() {
+                const btnIcon = document.getElementById('centerIcon');
+                const btnText = document.getElementById('centerText');
+                const addBtn = document.getElementById('adminAddBtn');
+                const btnTracking = document.getElementById('btnTracking');
+
+                if(this.isAdmin) {
+                    if(btnIcon) btnIcon.className = 'fas fa-clipboard-list';
+                    if(btnText) btnText.innerText = 'Pedidos';
+                    if(addBtn) addBtn.classList.remove('d-none');
+
+                    // Cambiar Seguimiento por Historial en la navegación para el admin
+                    if(btnTracking) { btnTracking.innerHTML = `<i class="fas fa-history"></i>Historial`; btnTracking.onclick = () => this.changeTab('history'); }
+
+                    this.changeTab('admin');
+                } else {
+                    if(btnIcon) btnIcon.className = 'fas fa-shopping-basket';
+                    if(btnText) btnText.innerText = 'Carrito';
+                    if(addBtn) addBtn.classList.add('d-none');
+
+                    if(btnTracking) { btnTracking.innerHTML = `<i class="fas fa-truck"></i>Seguimiento`; btnTracking.onclick = () => this.changeTab('tracking'); }
+
+                    this.changeTab('home');
+                }
+                this.render();
+            }
+
+            // Start Firestore listener for orders (real-time)
+            startOrdersListener() {
+                if(!window._firebaseEnabled || !window._db) {
+                    console.warn('No Firestore available to start orders listener.');
+                    return;
+                }
+                // If already subscribed, do nothing
+                if(this._ordersUnsubscribe) return;
+
+                // Listen for orders ordered by createdAt desc
+                this._ordersUnsubscribe = window._db.collection(this.ORDER_COLLECTION)
+                    .orderBy('createdAt', 'desc')
+                    .onSnapshot(snapshot => {
+                        // Map docs to order objects
+                        const orders = [];
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            orders.push(Object.assign({ id: doc.id }, data));
+                        });
+
+                        // Update internal orders list used by admin
+                        this.orders = orders;
+                        localStorage.setItem('pel_orders', JSON.stringify(this.orders));
+
+                        // compute pending count and set counter
+                        const pendingCount = this.orders.filter(o => !o.status || o.status === 'Pedido recibido' || o.status.toLowerCase().includes('pend')).length;
+                        // show pending count in badge (reuse cartBadge for simplicity when admin view; adjust if you have separate UI)
+                        const badge = document.getElementById('cartBadge');
+                        if(badge) {
+                            badge.style.display = pendingCount ? 'flex' : 'none';
+                            badge.innerText = pendingCount;
+                        }
+
+                        // Detect added docs and show notifications for new orders only
+                        snapshot.docChanges().forEach(change => {
+                            if(change.type === 'added') {
+                                const doc = change.doc;
+                                const id = doc.id;
+                                if(!this._knownOrderIds.has(id)) {
+                                    this._knownOrderIds.add(id);
+                                    const data = doc.data();
+                                    this.showOrderNotification(Object.assign({ id }, data));
+                                }
+                            } else if(change.type === 'modified') {
+                                // update known set if needed
+                                const id = change.doc.id;
+                                if(!this._knownOrderIds.has(id)) this._knownOrderIds.add(id);
+                            } else if(change.type === 'removed') {
+                                const id = change.doc.id;
+                                this._knownOrderIds.delete(id);
+                            }
+                        });
+
+                        // If admin panel is visible, re-render the orders area
+                        if(this.isAdmin) this.renderAdminOrders();
+                    }, err => {
+                        console.error('Orders listener error', err);
+                    });
+            }
+
+            stopOrdersListener() {
+                if(this._ordersUnsubscribe) {
+                    this._ordersUnsubscribe();
+                    this._ordersUnsubscribe = null;
+                }
+                this._knownOrderIds.clear();
+            }
+
+            // Show lateral notification (admin)
+            showOrderNotification(order) {
+                // Build notification DOM
+                const container = document.getElementById('orderNotifContainer');
+                if(!container) return;
+                // create node
+                const node = document.createElement('div');
+                node.className = 'order-notif animate__animated';
+                node.innerHTML = `
+                    <div class="meta">
+                        <div>
+                            <h4><i class="fas fa-bell" style="margin-right:8px;color:var(--accent)"></i> NUEVO PEDIDO</h4>
+                            <div class="small">Pedido #${order.id ? order.id : (order.localId || '').toString().slice(-6)}</div>
+                        </div>
+                        <button class="notif-close" title="Cerrar">&times;</button>
+                    </div>
+                    <div style="margin-top:8px;">
+                        <div class="small"><strong>Cliente:</strong> ${order.client?.name || 'No registrado'}</div>
+                        <div class="small"><strong>Modalidad:</strong> ${order.modo || order.mode || 'N/A'}</div>
+                        <div class="small"><strong>Total:</strong> S/ ${order.total ? Number(order.total).toFixed(2) : '0.00'}</div>
+                        <div class="small"><strong>Productos:</strong> ${Array.isArray(order.items) ? order.items.reduce((s,i)=>s+i.qty,0) : '0'}</div>
+                        <div class="actions">
+                            <div class="btn-notif" style="margin-top:10px;" onclick="window.app.renderAdminOrders(); window.app.changeTab('admin');">VER PEDIDO</div>
+                            <div style="display:inline-block"></div>
+                        </div>
+                    </div>
+                `;
+                // close button handler
+                node.querySelector('.notif-close').addEventListener('click', () => {
+                    node.classList.remove('show');
+                    setTimeout(()=>node.remove(), 350);
+                });
+
+                container.appendChild(node);
+                // trigger animation (enter from right)
+                requestAnimationFrame(()=> node.classList.add('show') );
+                // Keep until closed by admin
+            }
+
+            // --- ADMIN UI: render orders from this.orders (data from Firestore listener) ---
+            renderAdminOrders() {
+                const container = document.getElementById('adminOrdersList');
+                const ordersArr = Array.isArray(this.orders) ? this.orders : [];
+
+                // Filter delivery orders not sent? Show all
+                if(!ordersArr.length) {
+                    container.innerHTML = '<p class="text-muted">No hay pedidos.</p>';
+                    return;
+                }
+
+                // Display each order with required fields
+                container.innerHTML = ordersArr.map(o => {
+                    const id = o.id || o.localId || '';
+                    const status = o.status || 'Pendiente';
+                    const fecha = o.createdAt && o.createdAt.seconds ? new Date(o.createdAt.seconds * 1000).toLocaleString() : (o.fecha_local || '');
+                    const itemsHtml = (o.items || []).map(it=>`<div style="display:flex; justify-content:space-between;"><div>${it.qty}x ${it.name}</div><div>S/ ${(it.price*it.qty).toFixed(2)}</div></div>`).join('');
+                    const total = o.total ? Number(o.total).toFixed(2) : (o.subtotal ? Number(o.subtotal).toFixed(2) : '0.00');
+                    return `
+                        <div class="status-card" style="background:rgba(255,248,236,0.03); border-radius:12px; padding:12px; margin-bottom:12px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <small class="text-primary">PEDIDO #${id}</small>
+                                    <div style="font-weight:700; color:var(--cream); margin-top:4px;">${o.client?.name || (o.info || '')}</div>
+                                    <small style="color:rgba(255,248,236,0.7)">${fecha}</small>
+                                </div>
+                                <div style="text-align:right">
+                                    <span class="badge" style="background:${status === 'Pedido enviado' ? '#2d9a3a' : 'rgba(245,166,35,0.9)'}; color:#17100C; padding:6px 10px; border-radius:10px; font-weight:700;">${status}</span>
+                                </div>
+                            </div>
+
+                            <div style="margin-top:10px; color:rgba(255,248,236,0.9)">${o.modo || ''}</div>
+                            <div style="margin-top:8px;">${itemsHtml}</div>
+
+                            <div style="margin-top:8px; font-weight:800;">TOTAL: S/ ${total}</div>
+
+                            <div style="display:flex; gap:8px; margin-top:10px;">
+                                <button class="btn btn-sm btn-outline-light" onclick="window.app.viewOrder('${id}')">VER PEDIDO</button>
+                                <button class="btn btn-sm btn-warning" onclick="window.app.updateStatusFirestore('${id}', 'Preparando pedido')">Preparar</button>
+                                <button class="btn btn-sm btn-success" onclick="window.app.updateStatusFirestore('${id}', 'Pedido enviado')">Enviar</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // admin quick view (scroll to order) — optional
+            viewOrder(id) {
+                this.changeTab('admin');
+                // If using Firestore-based orders, they are already in DOM; this focuses first matching element
+                // (no element id set, so we just ensure admin area is visible)
+                // Better approach: implement modal if needed — left minimal to avoid changing core.
+            }
+
+            // Update status in Firestore
+            async updateStatusFirestore(id, newStatus) {
+                if(!window._firebaseEnabled || !window._db) {
+                    Swal.fire('No conectado', 'No se puede actualizar en servidor.', 'error');
+                    return;
+                }
+                try {
+                    await window._db.collection(this.ORDER_COLLECTION).doc(id).update({ status: newStatus });
+                    Swal.fire('Estado actualizado', '', 'success');
+                } catch(err) {
+                    console.error('Error updating status', err);
+                    Swal.fire('Error', 'No se pudo actualizar el estado.', 'error');
+                }
+            }
+
+            // --- History renderer (kept) ---
+            renderHistory() {
+                const container = document.getElementById('adminHistoryList');
+                const historyOrders = (this.orders || []).filter(o => o.status === 'Pedido enviado' || o.status === 'Entregado' || (o.status && o.status.toLowerCase() === 'entregado'));
+                if(!historyOrders.length) {
+                    container.innerHTML = '<p class="text-muted">No hay pedidos en el historial.</p>';
+                    return;
+                }
+
+                container.innerHTML = historyOrders.map(o => {
+                    const id = o.id || o.localId || '';
+                    const fecha = o.createdAt && o.createdAt.seconds ? new Date(o.createdAt.seconds * 1000).toLocaleString() : (o.fecha_local || '');
+                    const itemsHtml = (o.items || []).map(it=>`<div style="display:flex; justify-content:space-between;"><div>${it.qty}x ${it.name}</div><div>S/ ${(it.price*it.qty).toFixed(2)}</div></div>`).join('');
+                    const total = o.total ? Number(o.total).toFixed(2) : (o.subtotal ? Number(o.subtotal).toFixed(2) : '0.00');
+                    return `
+                        <div style="background:rgba(255,248,236,0.03); border-radius:12px; padding:12px; margin-bottom:12px;">
+                            <div style="display:flex; justify-content:space-between; align-items:start;">
+                                <div>
+                                    <small class="text-primary">PEDIDO #${id}</small>
+                                    <div style="font-weight:700; color:var(--cream); margin-top:4px;">${o.client?.name || ''}</div>
+                                    <small style="color:rgba(255,248,236,0.7)">${fecha}</small>
+                                </div>
+                                <div><span class="badge bg-secondary">${o.status}</span></div>
+                            </div>
+                            <div style="margin-top:8px;">${itemsHtml}</div>
+                            <div style="margin-top:8px; font-weight:800;">TOTAL: S/ ${total}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // --- TRACKING client (kept) ---
+            renderTracking() {
+                const container = document.getElementById('myTracking');
+                const myLastOrder = (this.orders || []).filter(o => (o.modo === 'delivery' || o.modo === 'Delivery')).pop();
+
+                if(!myLastOrder) {
+                    container.innerHTML = '<p class="text-center text-muted mt-5">No tienes pedidos activos.</p>';
+                    return;
+                }
+
+                const s = myLastOrder.status;
+                container.innerHTML = `
+                    <div style="background:rgba(255,248,236,0.03); padding:12px; border-radius:12px;">
+                        <div class="text-center mb-4">
+                            <h4 style="color:var(--cream)">Pedido #${(myLastOrder.id||myLastOrder.localId||'').toString().slice(-6)}</h4>
+                            <p class="text-muted small" style="color:rgba(255,248,236,0.8)">Estado actual: ${s}</p>
+                        </div>
+                        
+                        <div style="opacity:${['Pedido recibido','Preparando pedido','Pedido enviado'].includes(s) ? 1 : 0.45}; margin-bottom:8px;">
+                            <p class="mb-0 fw-bold">Pedido recibido</p>
+                            <small>Estamos revisando tu orden.</small>
+                        </div>
+
+                        <div style="opacity:${['Preparando pedido','Pedido enviado'].includes(s) ? 1 : 0.45}; margin-bottom:8px;">
+                            <p class="mb-0 fw-bold">Preparando pedido</p>
+                            <small>Tu pollo está en el horno.</small>
+                        </div>
+
+                        <div style="opacity:${s === 'Pedido enviado' ? 1 : 0.45};">
+                            <p class="mb-0 fw-bold">Pedido enviado</p>
+                            <small>¡El motorizado va en camino!</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-secondary w-100 mt-3" onclick="window.app.changeTab('home')">Regresar al Menú</button>
+                `;
+            }
+
+            // --- CRUD ADMIN: open product modal with image upload (drag&drop + file input) ---
+            async openProductModal(id = null) {
+                // find product or create new object
+                const p = id ? this.products.find(x => x.id === id) : { name:'', price:'', desc:'', img:'', cat:'brasas' };
+
+                // Build an HTML template for SweetAlert including drag&drop zone + file input
+                const html = `
+                    <input id="n" class="swal2-input" placeholder="Nombre" value="${(p.name||'').replace(/"/g,'&quot;')}">
+                    <input id="pr" class="swal2-input" type="number" placeholder="Precio" value="${p.price || ''}">
+                    <input id="i" class="swal2-input" placeholder="Descripción" value="${p.desc || ''}">
+
+                    <div style="margin-top:10px;">
+                        <div id="uploadZone" class="upload-zone">
+                            <div id="uploadHint" style="font-weight:700;color:var(--bg);">Arrastra una imagen aquí o</div>
+                            <button id="selectFileBtn" class="btn btn-sm" style="background:var(--accent); color:var(--bg); border:none; border-radius:8px; padding:6px 10px;">SELECCIONAR IMAGEN</button>
+                            <div style="font-size:0.85rem;color:var(--bg);margin-top:6px;">JPG, PNG, WEBP · Máx 10 MB</div>
+                            <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp" style="display:none">
+                            <img id="previewImg" src="${p.img || ''}" class="thumb-preview" style="${p.img ? '' : 'display:none;'} margin-top:8px;"/>
+                            <div id="uploadActions" style="${p.img ? '' : 'display:none;'} margin-top:8px;">
+                                <button id="changeImgBtn" class="btn btn-sm btn-outline-secondary">CAMBIAR IMAGEN</button>
+                                <button id="removeImgBtn" class="btn btn-sm btn-outline-danger">ELIMINAR</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const { value: v } = await Swal.fire({
+                    title: id ? 'Editar Plato' : 'Nuevo Plato',
+                    html,
+                    showCancelButton: true,
+                    confirmButtonText: 'Guardar',
+                    focusConfirm: false,
+                    background: '#161616',
+                    didOpen: () => {
+                        // Setup drag & drop and file input handlers
+                        const uploadZone = document.getElementById('uploadZone');
+                        const fileInput = document.getElementById('fileInput');
+                        const selectBtn = document.getElementById('selectFileBtn');
+                        const previewImg = document.getElementById('previewImg');
+                        const uploadActions = document.getElementById('uploadActions');
+                        const changeBtn = document.getElementById('changeImgBtn');
+                        const removeBtn = document.getElementById('removeImgBtn');
+
+                        let chosenFile = null;
+
+                        const showPreviewFromFile = (file) => {
+                            const reader = new FileReader();
+                            reader.onload = e => {
+                                previewImg.src = e.target.result;
+                                previewImg.style.display = 'block';
+                                uploadActions.style.display = 'flex';
+                            };
+                            reader.readAsDataURL(file);
+                        };
+
+                        const resetUpload = () => {
+                            chosenFile = null;
+                            previewImg.src = '';
+                            previewImg.style.display = 'none';
+                            uploadActions.style.display = 'none';
+                            document.getElementById('uploadHint').innerText = 'Arrastra una imagen aquí o';
+                        };
+
+                        // If product has existing image, keep it as preview unless changed
+                        if(previewImg.src && previewImg.src.length) {
+                            // preview already shown
+                        }
+
+                        selectBtn.addEventListener('click', () => fileInput.click());
+                        fileInput.addEventListener('change', (ev) => {
+                            const f = ev.target.files[0];
+                            if(!f) return;
+                            // Validation
+                            if(!f.type.startsWith('image/')) {
+                                Swal.fire('Formato no válido', 'Selecciona un archivo JPG/PNG/WEBP.', 'error');
+                                fileInput.value = '';
+                                return;
+                            }
+                            if(f.size > 10 * 1024 * 1024) {
+                                Swal.fire('Archivo muy grande', 'El archivo supera el tamaño máximo de 10 MB.', 'error');
+                                fileInput.value = '';
+                                return;
+                            }
+                            chosenFile = f;
+                            showPreviewFromFile(f);
+                        });
+
+                        // Drag & drop handlers
+                        ['dragenter','dragover'].forEach(evt => {
+                            uploadZone.addEventListener(evt, (e) => {
+                                e.preventDefault(); e.stopPropagation();
+                                uploadZone.classList.add('dragover');
+                                document.getElementById('uploadHint').innerText = 'SUELTA LA IMAGEN AQUÍ';
+                            });
+                        });
+                        ['dragleave','drop','dragend'].forEach(evt => {
+                            uploadZone.addEventListener(evt, (e) => {
+                                e.preventDefault(); e.stopPropagation();
+                                uploadZone.classList.remove('dragover');
+                                document.getElementById('uploadHint').innerText = 'Arrastra una imagen aquí o';
+                            });
+                        });
+                        uploadZone.addEventListener('drop', (e) => {
+                            const f = e.dataTransfer.files[0];
+                            if(!f) return;
+                            if(!f.type.startsWith('image/')) {
+                                Swal.fire('Formato no válido', 'Arrastra un archivo JPG/PNG/WEBP.', 'error');
+                                return;
+                            }
+                            if(f.size > 10 * 1024 * 1024) {
+                                Swal.fire('Archivo muy grande', 'El archivo supera el tamaño máximo de 10 MB.', 'error');
+                                return;
+                            }
+                            chosenFile = f;
+                            fileInput.files = e.dataTransfer.files;
+                            showPreviewFromFile(f);
+                        });
+
+                        changeBtn?.addEventListener('click', () => fileInput.click());
+                        removeBtn?.addEventListener('click', () => {
+                            resetUpload();
+                            // If existing product had image, clear its value for saving
+                            previewImg.src = '';
+                        });
+
+                        // Save chosenFile into Swal for retrieval in preConfirm
+                        Swal.setQueueStepData = () => {}; // noop
+                        // Expose helper
+                        window.__swalChosenFile = () => chosenFile;
+                    },
+                    preConfirm: () => {
+                        // read values
+                        const name = document.getElementById('n').value;
+                        const price = parseFloat(document.getElementById('pr').value);
+                        const desc = document.getElementById('i').value;
+                        // chosen file retrieval
+                        const f = window.__swalChosenFile ? window.__swalChosenFile() : null;
+                        return { name, price, desc, file: f };
+                    }
+                });
+
+                if(v) {
+                    // Procesar imagen seleccionada
+                    let imageUrl = p.img || '';
+                    const file = v.file;
+                    
+                    if (file) {
+                        try {
+                            imageUrl = await this.compressImage(file);
+                            console.log('Imagen comprimida correctamente');
+                        } catch (err) {
+                            console.error('Error procesando imagen:', err);
+                            Swal.fire(
+                                'Error',
+                                'No se pudo procesar la imagen.',
+                                'error'
+                            );
+                            return;
+                        }
+                    }
+
+                    // Save product locally (existing behavior)
+                    if(id) {
+                        const i = this.products.findIndex(x => x.id === id);
+                        if(i !== -1) {
+                            this.products[i] = { id, name: v.name, price: v.price, desc: v.desc, img: imageUrl || p.img, cat: p.cat || 'brasas' };
+                        }
+                    } else {
+                        const newId = Date.now();
+                        this.products.push({ id: newId, name: v.name, price: v.price, desc: v.desc, img: imageUrl || '', cat: 'brasas' });
+                    }
+                    localStorage.setItem('pel_prod', JSON.stringify(this.products));
+                    this.render();
+
+                    // If Firestore products collection is used in project, also persist there
+                    if(window._firebaseEnabled && window._db) {
+                        try {
+                            const prodPayload = { name: v.name, price: v.price, desc: v.desc, img: imageUrl || '', cat: 'brasas', updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+                            if(id) {
+                                await window._db.collection(this.PRODUCTS_COLLECTION).doc(String(id)).set(prodPayload, { merge: true });
+                            } else {
+                                const docRef = await window._db.collection(this.PRODUCTS_COLLECTION).add(prodPayload);
+                                console.log('Product saved to Firestore with id', docRef.id);
+                            }
+                        } catch(err) {
+                            console.error('Error saving product to Firestore', err);
+                        }
+                    }
+                }
+            }
+
+            deleteProduct(id) {
+                this.products = this.products.filter(x => x.id !== id);
+                localStorage.setItem('pel_prod', JSON.stringify(this.products));
+                this.render();
+            }
+        }
+
+        // Instantiate app
+        window.app = new PelicanosApp();
+    </script>
+</body>
+</html>
