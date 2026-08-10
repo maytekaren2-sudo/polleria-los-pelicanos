@@ -1688,7 +1688,11 @@ compressImage(file) {
                 container.innerHTML = `
                     <div style="background:rgba(255,248,236,0.03); padding:12px; border-radius:12px;">
                         <div class="text-center mb-4">
-                            <h4 style="color:var(--cream)">Pedido #${(myLastOrder.id||myLastOrder.localId||'').toString().slice(-6)}</h4>
+                            <h4 style="color:var(--cream)">
+                                Pedido #${myLastOrder.orderNumber
+                                    ? String(myLastOrder.orderNumber).padStart(3, '0')
+                                    : '---'}
+                            </h4>
                             <p class="text-muted small" style="color:rgba(255,248,236,0.8)">Estado actual: ${s}</p>
                         </div>
                         
