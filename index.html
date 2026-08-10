@@ -387,11 +387,65 @@
 
         /* Form inputs (Swal) keep previous style but more readable */
         .swal2-popup { border-radius: 18px !important; background: #161616 !important; color: #fff !important; }
-        .swal2-input, .swal2-select, .swal2-textarea {
+        .swal2-input,
+        .swal2-select,
+        .swal2-textarea {
             background: rgba(255,248,236,0.04) !important;
             color: #fff !important;
             border: 1px solid rgba(245,230,200,0.08) !important;
             font-weight:600 !important;
+        }
+        
+        /* Opciones del selector Modo de Entrega */
+        .swal2-select option {
+            color: #000 !important;
+            background: #fff !important;
+        }
+        
+        /* Carrito: permite desplazar los productos sin esconder los botones */
+        .swal2-popup.cart-popup {
+            max-height: 85vh !important;
+        }
+        
+        .swal2-popup.cart-popup .swal2-html-container {
+            max-height: 58vh !important;
+            overflow-y: auto !important;
+            padding-right: 6px !important;
+        }
+        
+        /* Cremas compactas */
+        .crema-compacta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            background: #222 !important;
+            padding: 5px 8px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            min-height: 34px;
+        }
+        
+        .crema-compacta .crema-nombre {
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+        
+        .crema-compacta .crema-controles {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .crema-compacta .crema-btn {
+            width: 25px;
+            height: 25px;
+            padding: 0;
+            border-radius: 6px;
+            border: none;
+            font-weight: 800;
+            line-height: 25px;
         }
 
         /* === Notificación lateral para administradores === */
@@ -817,20 +871,38 @@ compressImage(file) {
 
                 const { value: formValues } = await Swal.fire({
                     title: 'Tu Pedido',
+                    customClass: {
+                        popup: 'cart-popup'
+                    },
                     html: `
                         ${cartListHtml}
                         <h6 class="text-primary fw-bold text-start" style="color:#FFD8A6">¿Deseas Cremas?</h6>
                         <p class="small text-start" style="color:#fff">(1 de c/u gratis, extra S/ 0.50)</p>
                         ${Object.keys(this.cremas).map(c => `
-                            <div class="crema-item" style="background:#222;padding:8px;border-radius:10px;margin-bottom:6px;">
-                                <span style="color:#fff;">${c}</span>
-                                <div class="crema-controls">
-                                    <button class="crema-btn" onclick="window.app.updateCrema('${c}', -1)">-</button>
-                                    <span id="qty-${c}">${this.cremas[c]}</span>
-                                    <button class="crema-btn" onclick="window.app.updateCrema('${c}', 1)">+</button>
-                                </div>
+                        <div class="crema-compacta">
+                            <span class="crema-nombre">${c}</span>
+                    
+                            <div class="crema-controles">
+                                <button
+                                    class="crema-btn"
+                                    onclick="window.app.updateCrema('${c}', -1)">
+                                    −
+                                </button>
+                    
+                                <span
+                                    id="qty-${c}"
+                                    style="min-width:18px;text-align:center;color:#fff;font-weight:700;">
+                                    ${this.cremas[c]}
+                                </span>
+                    
+                                <button
+                                    class="crema-btn"
+                                    onclick="window.app.updateCrema('${c}', 1)">
+                                    +
+                                </button>
                             </div>
-                        `).join('')}
+                        </div>
+                    `).join('')}
                         <div class="text-end h5 mt-3" style="color:#fff;">Total: S/ <span id="cartTotal">${totalBase.toFixed(2)}</span></div>
                     `,
                     showCancelButton: true,
