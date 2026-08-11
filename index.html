@@ -1274,18 +1274,20 @@ compressImage(file) {
             window.open(
                 `https://wa.me/51935700076?text=${encodeURIComponent(text)}`
             );
-        }
+            }
+            
             // --- ADMIN: LOGIN + INICIO DEL LISTENER EN TIEMPO REAL ---
-           async adminLogin() {
+            
+            async adminLogin() {
 
-    // Si ya está dentro como administrador, cerrar sesión
-    if (this.isAdmin) {
-        await firebase.auth().signOut();
-        this.isAdmin = false;
-        this.stopOrdersListener();
-        this.updateAdminUI();
-        return;
-    }
+                // Si ya está dentro como administrador, cerrar sesión
+                if (this.isAdmin) {
+                    await firebase.auth().signOut();
+                    this.isAdmin = false;
+                    this.stopOrdersListener();
+                    this.updateAdminUI();
+                    return;
+                }
 
     // Verificar que Firebase Authentication esté disponible
     if (!window._firebaseEnabled || !window._auth) {
