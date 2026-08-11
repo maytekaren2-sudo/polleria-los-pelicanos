@@ -681,12 +681,10 @@
 
                 this.render();
                 this.updateBadge();
-            }
-
-            // ==========================================================
-            // ESCUCHAR PRODUCTOS DESDE FIRESTORE
-            // ==========================================================
-            this.listenProducts();
+                
+                // Escuchar productos de Firebase en tiempo real
+                this.listenProducts();
+                }
             
             // --- COMPRIMIR IMAGEN ANTES DE GUARDAR EN FIRESTORE ---
 compressImage(file) {
@@ -811,8 +809,15 @@ compressImage(file) {
                                 <div class="price-tag">S/ ${typeof p.price === 'number' ? p.price.toFixed(2) : p.price}</div>
                                 ${this.isAdmin ? `
                                     <div style="display:flex; gap:8px;">
-                                        <button class="btn-edit btn btn-sm btn-outline-secondary" onclick="window.app.openProductModal(${p.id})">Editar</button>
-                                        <button class="btn-delete btn btn-sm btn-outline-danger" onclick="window.app.deleteProduct(${p.id})">Eliminar</button>
+                                        <button class="btn-edit btn btn-sm btn-outline-secondary"
+                                            onclick="window.app.openProductModal('${p.id}')">
+                                            Editar
+                                        </button>
+                                        
+                                        <button class="btn-delete btn btn-sm btn-outline-danger"
+                                            onclick="window.app.deleteProduct('${p.id}')">
+                                            Eliminar
+                                        </button>
                                     </div>
                                 ` : `
                                     <button class="btn-add" onclick="window.app.addToCart(${p.id})">+ Agregar</button>
@@ -1723,62 +1728,83 @@ compressImage(file) {
 
             // --- CRUD ADMIN: open product modal with image upload (drag&drop + file input) ---
             // ==========================================================
-// PRODUCTOS EN TIEMPO REAL DESDE FIRESTORE
-// ==========================================================
-listenProducts() {
-
-    if (!window._firebaseEnabled || !window._db) {
-        return;
-    }
-
-    window._db
-        .collection(this.PRODUCTS_COLLECTION)
-        .onSnapshot(snapshot => {
-
-            const firestoreProducts = [];
-
-            snapshot.forEach(doc => {
-
-                const data = doc.data();
-
-                firestoreProducts.push({
-                    id: doc.id,
-                    name: data.name || '',
-                    price: Number(data.price || 0),
-                    desc: data.desc || '',
-                    img: data.img || '',
-                    cat: data.cat || 'brasas'
-                });
-
-            });
-
-            // Si Firebase tiene productos, usarlos
-            if (firestoreProducts.length > 0) {
-
-                this.products = firestoreProducts;
-
-                // Mantener copia local actualizada
-                localStorage.setItem(
-                    'pel_prod',
-                    JSON.stringify(this.products)
-                );
-
-                // Actualizar pantalla
-                this.render();
+            // PRODUCTOS EN TIEMPO REAL DESDE FIRESTORE
+            // ==========================================================
+            listenProducts() {
+            
+                if (!window._firebaseEnabled || !window._db) {
+                    console.warn('Firebase no disponible para productos.');
+                    return;
+                }
+            
+                console.log('Escuchando productos desde Firestore...');
+            
+                window._db
+                    .collection(this.PRODUCTS_COLLECTION)
+                    .onSnapshot(snapshot => {
+            
+                        const firestoreProducts = [];
+            
+                        snapshot.forEach(doc => {
+            
+                            const data = doc.data();
+            
+                            firestoreProducts.push({
+                                id: doc.id,
+                                name: data.name || '',
+                                price: Number(data.price || 0),
+                                desc: data.desc || '',
+                                img: data.img || '',
+                                cat: data.cat || 'brasas'
+                            });
+            
+                        });
+            
+                        // Firebase es la fuente oficial
+                        this.products = firestoreProducts;
+            
+                        // Mantener respaldo local
+                        localStorage.setItem(
+                            'pel_prod',
+                            JSON.stringify(this.products)
+                        );
+            
+                        // Actualizar menú inmediatamente
+                        this.render();
+            
+                        console.log(
+                            'Productos sincronizados:',
+                            this.products.length
+                        );
+            
+                    }, error => {
+            
+                        console.error(
+                            'Error escuchando productos de Firestore:',
+                            error
+                        );
+            
+                    });
             }
-
-        }, error => {
-
-            console.error(
-                'Error escuchando productos de Firestore:',
-                error
-            );
-
-        });
-}
             async openProductModal(id = null) {
                 // find product or create new object
-                const p = id ? this.products.find(x => x.id === id) : { name:'', price:'', desc:'', img:'', cat:'brasas' };
+                const p = id 
+                    ? this.products.find(x => x.id === id) 
+                    : { 
+                        name:'', 
+                        price:'', 
+                        desc:'', 
+                        img:'', 
+                        cat:'brasas' 
+                    };
+                if (id && !p) {
+                    Swal.fire(
+                        'Producto no encontrado',
+                        'El producto ya no existe en Firebase.',
+                        'warning'
+                    );
+                    return;
+                }
 
                 // Build an HTML template for SweetAlert including drag&drop zone + file input
                 const html = `
@@ -1936,40 +1962,168 @@ listenProducts() {
                         }
                     }
 
-                    // Save product locally (existing behavior)
-                    if(id) {
-                        const i = this.products.findIndex(x => x.id === id);
-                        if(i !== -1) {
-                            this.products[i] = { id, name: v.name, price: v.price, desc: v.desc, img: imageUrl || p.img, cat: p.cat || 'brasas' };
-                        }
-                    } else {
-                        const newId = Date.now();
-                        this.products.push({ id: newId, name: v.name, price: v.price, desc: v.desc, img: imageUrl || '', cat: 'brasas' });
+                    // ==========================================================
+                    // GUARDAR PRODUCTO EN FIRESTORE
+                    // ==========================================================
+                    
+                    if (!window._firebaseEnabled || !window._db) {
+                    
+                        Swal.fire(
+                            'Firebase no disponible',
+                            'No se puede guardar el producto en el servidor.',
+                            'error'
+                        );
+                    
+                        return;
                     }
-                    localStorage.setItem('pel_prod', JSON.stringify(this.products));
-                    this.render();
-
-                    // If Firestore products collection is used in project, also persist there
-                    if(window._firebaseEnabled && window._db) {
-                        try {
-                            const prodPayload = { name: v.name, price: v.price, desc: v.desc, img: imageUrl || '', cat: 'brasas', updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-                            if(id) {
-                                await window._db.collection(this.PRODUCTS_COLLECTION).doc(String(id)).set(prodPayload, { merge: true });
-                            } else {
-                                const docRef = await window._db.collection(this.PRODUCTS_COLLECTION).add(prodPayload);
-                                console.log('Product saved to Firestore with id', docRef.id);
+                    
+                    try {
+                    
+                        const prodPayload = {
+                            name: v.name.trim(),
+                            price: Number(v.price),
+                            desc: v.desc.trim(),
+                            img: imageUrl || '',
+                            cat: p.cat || 'brasas',
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                    
+                        // EDITAR PRODUCTO
+                        if (id) {
+                    
+                            await window._db
+                                .collection(this.PRODUCTS_COLLECTION)
+                                .doc(String(id))
+                                .set(
+                                    prodPayload,
+                                    { merge: true }
+                                );
+                    
+                            console.log(
+                                'Producto actualizado en Firebase:',
+                                id
+                            );
+                    
+                        }
+                    
+                        // CREAR PRODUCTO NUEVO
+                        else {
+                    
+                            const docRef = await window._db
+                                .collection(this.PRODUCTS_COLLECTION)
+                                .add({
+                                    ...prodPayload,
+                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                    
+                            console.log(
+                                'Producto creado en Firebase:',
+                                docRef.id
+                            );
+                        }
+                    
+                        Swal.fire({
+                            icon: 'success',
+                            title: id
+                                ? 'Producto actualizado'
+                                : 'Producto agregado',
+                            text: 'El menú se actualizará automáticamente.',
+                            timer: 1500,
+                            showConfirmButton: false,
+                            background: '#161616',
+                            color: '#fff'
+                        });
+                    
+                    } catch (err) {
+                    
+                        console.error(
+                            'Error guardando producto en Firebase:',
+                            err
+                        );
+                    
+                        Swal.fire(
+                            'Error',
+                            'No se pudo guardar el producto en Firebase.',
+                            'error'
+                        );
+                    }
                             }
-                        } catch(err) {
-                            console.error('Error saving product to Firestore', err);
-                        }
-                    }
-                }
-            }
 
-            deleteProduct(id) {
-                this.products = this.products.filter(x => x.id !== id);
-                localStorage.setItem('pel_prod', JSON.stringify(this.products));
-                this.render();
+            async deleteProduct(id) {
+            
+                if (!window._firebaseEnabled || !window._db) {
+            
+                    Swal.fire(
+                        'Firebase no disponible',
+                        'No se puede eliminar el producto.',
+                        'error'
+                    );
+            
+                    return;
+                }
+            
+                const result = await Swal.fire({
+            
+                    title: '¿Eliminar producto?',
+            
+                    text: 'El producto desaparecerá del menú para todos los clientes.',
+            
+                    icon: 'warning',
+            
+                    showCancelButton: true,
+            
+                    confirmButtonText: 'Sí, eliminar',
+            
+                    cancelButtonText: 'Cancelar',
+            
+                    confirmButtonColor: '#d33',
+            
+                    background: '#161616',
+            
+                    color: '#fff'
+                });
+            
+                if (!result.isConfirmed) {
+                    return;
+                }
+            
+                try {
+            
+                    await window._db
+                        .collection(this.PRODUCTS_COLLECTION)
+                        .doc(String(id))
+                        .delete();
+            
+                    Swal.fire({
+            
+                        icon: 'success',
+            
+                        title: 'Producto eliminado',
+            
+                        text: 'El menú se actualizó correctamente.',
+            
+                        timer: 1500,
+            
+                        showConfirmButton: false,
+            
+                        background: '#161616',
+            
+                        color: '#fff'
+                    });
+            
+                } catch (err) {
+            
+                    console.error(
+                        'Error eliminando producto:',
+                        err
+                    );
+            
+                    Swal.fire(
+                        'Error',
+                        'No se pudo eliminar el producto de Firebase.',
+                        'error'
+                    );
+                }
             }
         }
 
