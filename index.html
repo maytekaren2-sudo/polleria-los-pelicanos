@@ -682,6 +682,12 @@
                 this.render();
                 this.updateBadge();
             }
+
+            // ==========================================================
+            // ESCUCHAR PRODUCTOS DESDE FIRESTORE
+            // ==========================================================
+            this.listenProducts();
+            
             // --- COMPRIMIR IMAGEN ANTES DE GUARDAR EN FIRESTORE ---
 compressImage(file) {
     return new Promise((resolve, reject) => {
@@ -1716,6 +1722,60 @@ compressImage(file) {
             }
 
             // --- CRUD ADMIN: open product modal with image upload (drag&drop + file input) ---
+            // ==========================================================
+// PRODUCTOS EN TIEMPO REAL DESDE FIRESTORE
+// ==========================================================
+listenProducts() {
+
+    if (!window._firebaseEnabled || !window._db) {
+        return;
+    }
+
+    window._db
+        .collection(this.PRODUCTS_COLLECTION)
+        .onSnapshot(snapshot => {
+
+            const firestoreProducts = [];
+
+            snapshot.forEach(doc => {
+
+                const data = doc.data();
+
+                firestoreProducts.push({
+                    id: doc.id,
+                    name: data.name || '',
+                    price: Number(data.price || 0),
+                    desc: data.desc || '',
+                    img: data.img || '',
+                    cat: data.cat || 'brasas'
+                });
+
+            });
+
+            // Si Firebase tiene productos, usarlos
+            if (firestoreProducts.length > 0) {
+
+                this.products = firestoreProducts;
+
+                // Mantener copia local actualizada
+                localStorage.setItem(
+                    'pel_prod',
+                    JSON.stringify(this.products)
+                );
+
+                // Actualizar pantalla
+                this.render();
+            }
+
+        }, error => {
+
+            console.error(
+                'Error escuchando productos de Firestore:',
+                error
+            );
+
+        });
+}
             async openProductModal(id = null) {
                 // find product or create new object
                 const p = id ? this.products.find(x => x.id === id) : { name:'', price:'', desc:'', img:'', cat:'brasas' };
