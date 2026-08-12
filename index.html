@@ -406,7 +406,28 @@
         .swal2-popup.cart-popup {
             max-height: 85vh !important;
         }
+
+        /* === Modal Editar Plato === */
+        .swal2-popup.product-modal {
+            max-height: 90vh !important;
+            overflow: hidden !important;
+        }
         
+        .swal2-popup.product-modal .swal2-html-container {
+            max-height: 58vh !important;
+            overflow-y: auto !important;
+            padding-right: 8px !important;
+        }
+        
+        .swal2-popup.product-modal .swal2-actions {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: relative !important;
+            z-index: 20 !important;
+            margin-top: 12px !important;
+        }
+                
         .swal2-popup.cart-popup .swal2-html-container {
             max-height: 58vh !important;
             overflow-y: auto !important;
@@ -677,7 +698,8 @@
 
                 // internal snapshot unsubscribe reference
                 this._ordersUnsubscribe = null;
-                this._knownOrderIds = new Set(); // to avoid duplicate notif
+                this._knownOrderIds = new Set();
+                this._ordersListenerReady = false;
 
                 this.render();
                 this.updateBadge();
@@ -1494,25 +1516,58 @@ compressImage(file) {
                             badge.innerText = pendingCount;
                         }
 
-                        // Detect added docs and show notifications for new orders only
-                        snapshot.docChanges().forEach(change => {
-                            if(change.type === 'added') {
-                                const doc = change.doc;
-                                const id = doc.id;
-                                if(!this._knownOrderIds.has(id)) {
-                                    this._knownOrderIds.add(id);
-                                    const data = doc.data();
-                                    this.showOrderNotification(Object.assign({ id }, data));
+                        // Detectar pedidos nuevos solamente después de la carga inicial
+                        if (!this._ordersListenerReady) {
+                        
+                            // Registrar todos los pedidos que ya existían
+                            snapshot.forEach(doc => {
+                                this._knownOrderIds.add(doc.id);
+                            });
+                        
+                            // Desde ahora sí podemos detectar pedidos nuevos
+                            this._ordersListenerReady = true;
+                        
+                        } else {
+                        
+                            snapshot.docChanges().forEach(change => {
+                        
+                                if (change.type === 'added') {
+                        
+                                    const doc = change.doc;
+                                    const id = doc.id;
+                        
+                                    if (!this._knownOrderIds.has(id)) {
+                        
+                                        this._knownOrderIds.add(id);
+                        
+                                        const data = doc.data();
+                        
+                                        // Solo avisar si el pedido todavía está pendiente
+                                        if (
+                                            data.status !== 'Pedido enviado' &&
+                                            data.status !== 'Entregado'
+                                        ) {
+                                            this.showOrderNotification(
+                                                Object.assign({ id }, data)
+                                            );
+                                        }
+                                    }
+                        
+                                } else if (change.type === 'modified') {
+                        
+                                    const id = change.doc.id;
+                        
+                                    if (!this._knownOrderIds.has(id)) {
+                                        this._knownOrderIds.add(id);
+                                    }
+                        
+                                } else if (change.type === 'removed') {
+                        
+                                    const id = change.doc.id;
+                                    this._knownOrderIds.delete(id);
                                 }
-                            } else if(change.type === 'modified') {
-                                // update known set if needed
-                                const id = change.doc.id;
-                                if(!this._knownOrderIds.has(id)) this._knownOrderIds.add(id);
-                            } else if(change.type === 'removed') {
-                                const id = change.doc.id;
-                                this._knownOrderIds.delete(id);
-                            }
-                        });
+                            });
+                        }
 
                         // If admin panel is visible, re-render the orders area
                         if(this.isAdmin) this.renderAdminOrders();
@@ -1832,8 +1887,12 @@ compressImage(file) {
                 const { value: v } = await Swal.fire({
                     title: id ? 'Editar Plato' : 'Nuevo Plato',
                     html,
+                    customClass: {
+                        popup: 'product-modal'
+                    },
                     showCancelButton: true,
                     confirmButtonText: 'Guardar',
+                    cancelButtonText: 'Cancelar',
                     focusConfirm: false,
                     background: '#161616',
                     didOpen: () => {
