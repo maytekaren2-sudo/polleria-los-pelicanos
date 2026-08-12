@@ -940,9 +940,9 @@ compressImage(file) {
                         <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0">
                             <div style="max-width:65%">• ${c.product.name} (S/ ${c.product.price})</div>
                             <div style="display:flex; align-items:center; gap:8px">
-                                <button class="cart-qty-btn" onclick="window.app.changeQty(${c.id}, -1)">-</button>
+                                <button class="cart-qty-btn" onclick="window.app.changeQty('${c.id}', -1)">-</button>
                                 <span id="cart-qty-${c.id}" style="min-width:22px; text-align:center; display:inline-block; color:#fff; font-weight:700">${c.qty}</span>
-                                <button class="cart-qty-btn" onclick="window.app.changeQty(${c.id}, 1)">+</button>
+                                <button class="cart-qty-btn" onclick="window.app.changeQty('${c.id}', 1)">+</button>
                             </div>
                         </div>
                     `).join('');
