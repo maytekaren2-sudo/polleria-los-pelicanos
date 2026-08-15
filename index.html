@@ -1275,7 +1275,9 @@
                 this._ordersUnsubscribe = null;
                 this._knownOrderIds = new Set();
                 this._isOrdersListenerStarted = false;
+                this._ordersListenerReady = false;
 
+                
                 this.render();
                 this.updateBadge();
                 
