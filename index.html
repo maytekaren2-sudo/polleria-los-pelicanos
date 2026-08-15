@@ -2623,52 +2623,15 @@
                 if (!container) return;
             
                 // ==========================================================
-                // BUSCAR SOLAMENTE PEDIDOS DEL CLIENTE ACTUAL
+                // PEDIDO ACTUAL DEL CLIENTE
                 // ==========================================================
-            
-                const myOrders = (this.orders || [])
-                    .filter(o =>
-                        o.clientId === this.clientId &&
-                        (
-                            o.modo === 'delivery' ||
-                            o.modo === 'Delivery' ||
-                            o.modo === 'recojo' ||
-                            o.modo === 'Recojo'
-                        )
-                    )
-                    .sort((a, b) => {
-            
-                        const getTime = order => {
-            
-                            if (
-                                order.createdAt &&
-                                order.createdAt.seconds
-                            ) {
-                                return order.createdAt.seconds * 1000;
-                            }
-            
-                            if (order.fecha_local) {
-                                const time =
-                                    new Date(order.fecha_local).getTime();
-            
-                                return isNaN(time) ? 0 : time;
-                            }
-            
-                            if (order.localId) {
-                                return Number(order.localId);
-                            }
-            
-                            return 0;
-                        };
-            
-                        return getTime(b) - getTime(a);
-                    });
-            
-                // ==========================================================
-                // ÚLTIMO PEDIDO DEL CLIENTE
-                // ==========================================================
-            
-                const myLastOrder = myOrders[0];
+                
+                const currentOrderId =
+                    localStorage.getItem('pel_current_order_id');
+                
+                const myLastOrder = (this.orders || []).find(
+                    o => o.id === currentOrderId
+                );
             
                 // ==========================================================
                 // NO HAY PEDIDOS
