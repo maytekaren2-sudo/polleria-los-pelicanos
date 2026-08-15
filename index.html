@@ -2281,6 +2281,7 @@
                         const status = (o.status || '').toLowerCase();
             
                         return status !== 'pedido enviado' &&
+                               status !== 'pedido listo' &&
                                status !== 'entregado';
             
                     })
@@ -2513,13 +2514,23 @@
                                     class="admin-btn admin-btn-send"
                                     onclick="window.app.updateStatusFirestore(
                                         '${o.id}',
-                                        'Pedido enviado'
+                                        '${o.modo === 'recojo' || o.modo === 'Recojo'
+                                            ? 'Pedido listo'
+                                            : 'Pedido enviado'}'
                                     )">
-            
-                                    <i class="fas fa-motorcycle"></i>
-            
-                                    ENVIAR
-            
+                                
+                                    <i class="fas ${
+                                        o.modo === 'recojo' || o.modo === 'Recojo'
+                                            ? 'fa-store'
+                                            : 'fa-motorcycle'
+                                    }"></i>
+                                
+                                    ${
+                                        o.modo === 'recojo' || o.modo === 'Recojo'
+                                            ? 'LISTO PARA RECOGER'
+                                            : 'ENVIAR'
+                                    }
+                                
                                 </button>
             
                             </div>
@@ -2558,7 +2569,14 @@
             // --- History renderer (kept) ---
             renderHistory() {
                 const container = document.getElementById('adminHistoryList');
-                const historyOrders = (this.orders || []).filter(o => o.status === 'Pedido enviado' || o.status === 'Entregado' || (o.status && o.status.toLowerCase() === 'entregado'));
+                const historyOrders = (this.orders || []).filter(
+                    o =>
+                        o.status === 'Pedido enviado' ||
+                        o.status === 'Pedido listo' ||
+                        o.status === 'Entregado' ||
+                        (o.status && o.status.toLowerCase() === 'entregado')
+                );
+                
                 if(!historyOrders.length) {
                     container.innerHTML = '<p class="text-muted">No hay pedidos en el historial.</p>';
                     return;
@@ -2604,7 +2622,9 @@
                         o.clientId === this.clientId &&
                         (
                             o.modo === 'delivery' ||
-                            o.modo === 'Delivery'
+                            o.modo === 'Delivery' ||
+                            o.modo === 'recojo' ||
+                            o.modo === 'Recojo'
                         )
                     )
                     .sort((a, b) => {
@@ -2659,7 +2679,7 @@
                                 <h3>Seguimiento de mi Pedido</h3>
             
                                 <p>
-                                    No tienes pedidos delivery registrados.
+                                    No tienes pedidos registrados.
                                 </p>
             
                             </div>
@@ -2706,16 +2726,26 @@
                 // ESTADOS
                 // ==========================================================
             
+                const status =
+                    myLastOrder.status ||
+                    'Pedido recibido';
+                
+                const esRecojo =
+                    myLastOrder.modo === 'recojo' ||
+                    myLastOrder.modo === 'Recojo';
+                
                 const recibidoActivo = true;
-            
+                
                 const preparandoActivo =
                     status === 'Preparando pedido' ||
                     status === 'Pedido enviado' ||
+                    status === 'Pedido listo' ||
                     status === 'Entregado';
-            
-                const enviadoActivo =
-                    status === 'Pedido enviado' ||
-                    status === 'Entregado';
+                
+                const ultimoEstado =
+                    esRecojo
+                        ? status === 'Pedido listo' || status === 'Entregado'
+                        : status === 'Pedido enviado' || status === 'Entregado';
             
                 // ==========================================================
                 // MOSTRAR SEGUIMIENTO
@@ -2804,28 +2834,44 @@
                             </div>
             
             
-                            <!-- PEDIDO ENVIADO -->
-            
-                            <div class="tracking-step ${enviadoActivo ? 'active' : ''}">
-            
+                            <!-- ÚLTIMO PASO SEGÚN TIPO DE ENTREGA -->
+
+                            <div class="tracking-step ${ultimoEstado ? 'active' : ''}">
+                            
                                 <div class="tracking-icon">
-            
-                                    <i class="fas fa-motorcycle"></i>
-            
+                            
+                                    <i class="fas ${
+                                        esRecojo
+                                            ? 'fa-store'
+                                            : 'fa-motorcycle'
+                                    }"></i>
+                            
                                 </div>
-            
+                            
                                 <div class="tracking-info">
-            
+                            
                                     <div class="tracking-title">
-                                        Pedido enviado
+                            
+                                        ${
+                                            esRecojo
+                                                ? 'Pedido listo'
+                                                : 'Pedido enviado'
+                                        }
+                            
                                     </div>
-            
+                            
                                     <div class="tracking-description">
-                                        ¡El motorizado va en camino!
+                            
+                                        ${
+                                            esRecojo
+                                                ? '¡Tu pedido está listo! Puedes venir a recogerlo.'
+                                                : '¡El motorizado va en camino!'
+                                        }
+                            
                                     </div>
-            
+                            
                                 </div>
-            
+                            
                             </div>
             
             
