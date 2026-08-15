@@ -1255,6 +1255,23 @@
         class PelicanosApp {
             constructor() {
                 this.isAdmin = false;
+
+                // Identificador único permanente de este cliente/navegador
+                this.clientId = localStorage.getItem('pel_client_id');
+                
+                if (!this.clientId) {
+                    this.clientId =
+                        'client_' +
+                        Date.now() +
+                        '_' +
+                        Math.random().toString(36).substring(2, 10);
+                
+                    localStorage.setItem(
+                        'pel_client_id',
+                        this.clientId
+                    );
+                }
+                
                 this.cart = JSON.parse(localStorage.getItem('pel_cart')) || [];
                 this.cremas = JSON.parse(localStorage.getItem('pel_cremas')) || { 'MAYONESA': 0, 'ROCOTO': 0, 'KÉTCHUP': 0, 'MOSTAZA': 0 };
                 this.currentFilter = 'todos';
@@ -1282,7 +1299,7 @@
                 this.updateBadge();
                 
                 // Escuchar productos de Firebase en tiempo real
-                this.listenProducts
+                this.listenProducts();
                     
                 // Escuchar cambios de pedidos también para el cliente
                 if (window._firebaseEnabled && window._db) {
@@ -1637,9 +1654,12 @@
             );
         
             const order = {
-                localId: Date.now(),
+            localId: Date.now(),
         
-                items: this.cart.map(c => ({
+            // Identifica al cliente que realizó este pedido
+            clientId: this.clientId,
+        
+            items: this.cart.map(c => ({
                     id: c.id,
                     name: c.product.name,
                     price: c.product.price,
@@ -1717,7 +1737,9 @@
                                 orderRef,
                                 {
                                     orderNumber: nextNumber,
-        
+                            
+                                    clientId: order.clientId,
+                            
                                     items: order.items,
         
                                     cremas: order.cremas,
@@ -2099,13 +2121,38 @@
                             this.renderTracking();
                         }
                                                 
-                        // compute pending count and set counter
-                        const pendingCount = this.orders.filter(o => !o.status || o.status === 'Pedido recibido' || o.status.toLowerCase().includes('pend')).length;
-                        // show pending count in badge (reuse cartBadge for simplicity when admin view; adjust if you have separate UI)
-                        const badge = document.getElementById('cartBadge');
-                        if(badge) {
-                            badge.style.display = pendingCount ? 'flex' : 'none';
-                            badge.innerText = pendingCount;
+                        // ==========================================================
+                        // CONTADOR DEL BOTÓN CENTRAL
+                        // ==========================================================
+                        // Cliente: mostrar cantidad real del carrito.
+                        // Administrador: mostrar cantidad de pedidos pendientes.
+                        
+                        if (this.isAdmin) {
+                        
+                            const pendingCount = this.orders.filter(o => {
+                                const status = (o.status || '').toLowerCase();
+                        
+                                return (
+                                    !status ||
+                                    status === 'pedido recibido' ||
+                                    status.includes('pend')
+                                );
+                            }).length;
+                        
+                            const badge = document.getElementById('cartBadge');
+                        
+                            if (badge) {
+                                badge.style.display =
+                                    pendingCount > 0 ? 'flex' : 'none';
+                        
+                                badge.innerText = pendingCount;
+                            }
+                        
+                        } else {
+                        
+                            // En cliente el contador SIEMPRE representa el carrito
+                            this.updateBadge();
+                        
                         }
 
                         // Detectar pedidos nuevos solamente después de la carga inicial
@@ -2546,9 +2593,57 @@
 
                 const container = document.getElementById('myTracking');
             
-                const myLastOrder = (this.orders || [])
-                    .filter(o => o.modo === 'delivery' || o.modo === 'Delivery')
-                    .pop();
+                if (!container) return;
+            
+                // ==========================================================
+                // BUSCAR SOLAMENTE PEDIDOS DEL CLIENTE ACTUAL
+                // ==========================================================
+            
+                const myOrders = (this.orders || [])
+                    .filter(o =>
+                        o.clientId === this.clientId &&
+                        (
+                            o.modo === 'delivery' ||
+                            o.modo === 'Delivery'
+                        )
+                    )
+                    .sort((a, b) => {
+            
+                        const getTime = order => {
+            
+                            if (
+                                order.createdAt &&
+                                order.createdAt.seconds
+                            ) {
+                                return order.createdAt.seconds * 1000;
+                            }
+            
+                            if (order.fecha_local) {
+                                const time =
+                                    new Date(order.fecha_local).getTime();
+            
+                                return isNaN(time) ? 0 : time;
+                            }
+            
+                            if (order.localId) {
+                                return Number(order.localId);
+                            }
+            
+                            return 0;
+                        };
+            
+                        return getTime(b) - getTime(a);
+                    });
+            
+                // ==========================================================
+                // ÚLTIMO PEDIDO DEL CLIENTE
+                // ==========================================================
+            
+                const myLastOrder = myOrders[0];
+            
+                // ==========================================================
+                // NO HAY PEDIDOS
+                // ==========================================================
             
                 if (!myLastOrder) {
             
@@ -2556,13 +2651,17 @@
                         <div class="tracking-card">
             
                             <div class="tracking-header">
+            
                                 <div class="tracking-main-icon">
                                     <i class="fas fa-motorcycle"></i>
                                 </div>
             
                                 <h3>Seguimiento de mi Pedido</h3>
             
-                                <p>No tienes pedidos activos.</p>
+                                <p>
+                                    No tienes pedidos delivery registrados.
+                                </p>
+            
                             </div>
             
                             <button
@@ -2580,29 +2679,47 @@
                     return;
                 }
             
+                // ==========================================================
+                // DATOS DEL PEDIDO
+                // ==========================================================
+            
                 const id = myLastOrder.orderNumber
                     ? String(myLastOrder.orderNumber).padStart(3, '0')
                     : '---';
             
-                const fecha = myLastOrder.createdAt &&
-                              myLastOrder.createdAt.seconds
-                    ? new Date(
-                        myLastOrder.createdAt.seconds * 1000
-                      ).toLocaleString()
-                    : (myLastOrder.fecha_local || '');
+                const fecha =
+                    myLastOrder.createdAt &&
+                    myLastOrder.createdAt.seconds
+                        ? new Date(
+                            myLastOrder.createdAt.seconds * 1000
+                          ).toLocaleString()
+                        : (
+                            myLastOrder.fecha_local ||
+                            ''
+                        );
             
-                const status = myLastOrder.status || 'Pedido recibido';
+                const status =
+                    myLastOrder.status ||
+                    'Pedido recibido';
             
+                // ==========================================================
+                // ESTADOS
+                // ==========================================================
             
                 const recibidoActivo = true;
             
                 const preparandoActivo =
                     status === 'Preparando pedido' ||
-                    status === 'Pedido enviado';
+                    status === 'Pedido enviado' ||
+                    status === 'Entregado';
             
                 const enviadoActivo =
-                    status === 'Pedido enviado';
+                    status === 'Pedido enviado' ||
+                    status === 'Entregado';
             
+                // ==========================================================
+                // MOSTRAR SEGUIMIENTO
+                // ==========================================================
             
                 container.innerHTML = `
             
@@ -2614,7 +2731,9 @@
                                 <i class="fas fa-motorcycle"></i>
                             </div>
             
-                            <h3>Seguimiento de mi Pedido</h3>
+                            <h3>
+                                Seguimiento de mi Pedido
+                            </h3>
             
                         </div>
             
@@ -2637,7 +2756,7 @@
             
                             <!-- PEDIDO RECIBIDO -->
             
-                            <div class="tracking-step active">
+                            <div class="tracking-step ${recibidoActivo ? 'active' : ''}">
             
                                 <div class="tracking-icon">
             
