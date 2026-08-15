@@ -1274,6 +1274,7 @@
                 // internal snapshot unsubscribe reference
                 this._ordersUnsubscribe = null;
                 this._knownOrderIds = new Set();
+                this._isOrdersListenerStarted = false;
                 this._ordersListenerReady = false;
 
                 this.render();
@@ -1281,7 +1282,11 @@
                 
                 // Escuchar productos de Firebase en tiempo real
                 this.listenProducts();
+                // Escuchar cambios de pedidos también para el cliente
+                if (window._firebaseEnabled && window._db) {
+                    this.startOrdersListener();
                 }
+            }
             
             // --- COMPRIMIR IMAGEN ANTES DE GUARDAR EN FIRESTORE ---
 compressImage(file) {
@@ -2113,44 +2118,49 @@ compressImage(file) {
                             this._ordersListenerReady = true;
                         
                         } else {
-                        
+
+                            // Detectar cambios de pedidos
                             snapshot.docChanges().forEach(change => {
+                        
+                                const id = change.doc.id;
                         
                                 if (change.type === 'added') {
                         
-                                    const doc = change.doc;
-                                    const id = doc.id;
+                                    // Registrar pedido nuevo
+                                    this._knownOrderIds.add(id);
                         
-                                    if (!this._knownOrderIds.has(id)) {
+                                    // La notificación SOLO la recibe el administrador
+                                    if (this.isAdmin) {
                         
-                                        this._knownOrderIds.add(id);
+                                        const data = change.doc.data();
                         
-                                        const data = doc.data();
-                        
-                                        // Solo avisar si el pedido todavía está pendiente
+                                        // No notificar pedidos que ya fueron enviados
                                         if (
                                             data.status !== 'Pedido enviado' &&
                                             data.status !== 'Entregado'
                                         ) {
+                        
                                             this.showOrderNotification(
                                                 Object.assign({ id }, data)
                                             );
+                        
                                         }
                                     }
                         
                                 } else if (change.type === 'modified') {
                         
-                                    const id = change.doc.id;
+                                    // El pedido cambió, por ejemplo:
+                                    // Pedido recibido → Preparando pedido
+                                    // Preparando pedido → Pedido enviado
                         
-                                    if (!this._knownOrderIds.has(id)) {
-                                        this._knownOrderIds.add(id);
-                                    }
+                                    this._knownOrderIds.add(id);
                         
                                 } else if (change.type === 'removed') {
                         
-                                    const id = change.doc.id;
                                     this._knownOrderIds.delete(id);
+                        
                                 }
+                        
                             });
                         }
 
