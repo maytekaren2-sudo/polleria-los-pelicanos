@@ -2082,6 +2082,16 @@ compressImage(file) {
                         this.orders = orders;
                         localStorage.setItem('pel_orders', JSON.stringify(this.orders));
 
+                        // Actualizar automáticamente el seguimiento del cliente
+                        const trackingContent = document.getElementById('trackingContent');
+                        
+                        if (
+                            trackingContent &&
+                            !trackingContent.classList.contains('d-none')
+                        ) {
+                            this.renderTracking();
+                        }
+                                                
                         // compute pending count and set counter
                         const pendingCount = this.orders.filter(o => !o.status || o.status === 'Pedido recibido' || o.status.toLowerCase().includes('pend')).length;
                         // show pending count in badge (reuse cartBadge for simplicity when admin view; adjust if you have separate UI)
