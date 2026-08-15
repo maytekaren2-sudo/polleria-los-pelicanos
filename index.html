@@ -2518,22 +2518,19 @@
                                     class="admin-btn admin-btn-send"
                                     onclick="window.app.updateStatusFirestore(
                                         '${o.id}',
-                                        '${o.modo === 'recojo' 
-                                           o.modo === 'Recojo'
+                                        '${(o.modo === 'recojo' || o.modo === 'Recojo')
                                             ? 'Pedido listo'
                                             : 'Pedido enviado'}'
                                     )">
                                 
                                     <i class="fas ${
-                                        o.modo === 'recojo' 
-                                        o.modo === 'Recojo'
+                                        (o.modo === 'recojo' || o.modo === 'Recojo')
                                             ? 'fa-store'
                                             : 'fa-motorcycle'
                                     }"></i>
                                 
                                     ${
-                                        o.modo === 'recojo'  
-                                        o.modo === 'Recojo'
+                                        (o.modo === 'recojo' || o.modo === 'Recojo')
                                             ? 'LISTO PARA RECOGER'
                                             : 'ENVIAR'
                                     }
