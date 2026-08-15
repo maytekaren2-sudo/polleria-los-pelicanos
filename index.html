@@ -1772,6 +1772,7 @@
         
                     // ID interno de Firestore
                     order.id = orderRef.id;
+                    localStorage.setItem('pel_current_order_id', orderRef.id);
         
                     console.log(
                         'Pedido guardado correctamente:',
@@ -2009,9 +2010,14 @@
 
         // Usuario autorizado
         this.isAdmin = true;
-
         this.updateAdminUI();
-
+        
+        // Reiniciar listener para que ahora escuche como ADMIN
+        if (this._ordersUnsubscribe) {
+            this._ordersUnsubscribe();
+            this._ordersUnsubscribe = null;
+        }
+        
         // Escuchar pedidos en tiempo real
         this.startOrdersListener();
 
@@ -2089,135 +2095,134 @@
 
             // Start Firestore listener for orders (real-time)
             startOrdersListener() {
-                if(!window._firebaseEnabled || !window._db) {
-                    console.warn('No Firestore available to start orders listener.');
+
+                if (!window._firebaseEnabled || !window._db) {
+                    console.warn('Firestore no disponible.');
                     return;
                 }
-                // If already subscribed, do nothing
-                if(this._ordersUnsubscribe) return;
-
-                // Listen for orders ordered by createdAt desc
-                this._ordersUnsubscribe = window._db.collection(this.ORDER_COLLECTION)
-                    .orderBy('createdAt', 'desc')
-                    .onSnapshot(snapshot => {
-                        // Map docs to order objects
-                        const orders = [];
-                        snapshot.forEach(doc => {
-                            const data = doc.data();
-                            orders.push(Object.assign({ id: doc.id }, data));
-                        });
-
-                        // Update internal orders list used by admin
-                        this.orders = orders;
-                        localStorage.setItem('pel_orders', JSON.stringify(this.orders));
-
-                        // Actualizar automáticamente el seguimiento del cliente
-                        const trackingContent = document.getElementById('trackingContent');
-                        
-                        if (
-                            trackingContent &&
-                            !trackingContent.classList.contains('d-none')
-                        ) {
-                            this.renderTracking();
-                        }
-                                                
-                        // ==========================================================
-                        // CONTADOR DEL BOTÓN CENTRAL
-                        // ==========================================================
-                        // Cliente: mostrar cantidad real del carrito.
-                        // Administrador: mostrar cantidad de pedidos pendientes.
-                        
-                        if (this.isAdmin) {
-                        
-                            const pendingCount = this.orders.filter(o => {
-                                const status = (o.status || '').toLowerCase();
-                        
-                                return (
-                                    !status ||
-                                    status === 'pedido recibido' ||
-                                    status.includes('pend')
+            
+                // Evitar crear varios listeners
+                if (this._ordersUnsubscribe) {
+                    return;
+                }
+            
+                // ==========================================================
+                // ADMINISTRADOR
+                // Escucha todos los pedidos
+                // ==========================================================
+            
+                if (this.isAdmin) {
+            
+                    this._ordersUnsubscribe =
+                        window._db
+                            .collection(this.ORDER_COLLECTION)
+                            .orderBy('createdAt', 'desc')
+                            .onSnapshot(snapshot => {
+            
+                                const orders = [];
+            
+                                snapshot.forEach(doc => {
+            
+                                    orders.push({
+                                        id: doc.id,
+                                        ...doc.data()
+                                    });
+            
+                                });
+            
+                                this.orders = orders;
+            
+                                localStorage.setItem(
+                                    'pel_orders',
+                                    JSON.stringify(this.orders)
                                 );
-                            }).length;
-                        
-                            const badge = document.getElementById('cartBadge');
-                        
-                            if (badge) {
-                                badge.style.display =
-                                    pendingCount > 0 ? 'flex' : 'none';
-                        
-                                badge.innerText = pendingCount;
+            
+                                // Actualizar panel administrador
+                                this.renderAdminOrders();
+            
+                            }, error => {
+            
+                                console.error(
+                                    'Error listener administrador:',
+                                    error
+                                );
+            
+                            });
+            
+                    return;
+                }
+            
+                // ==========================================================
+                // CLIENTE
+                // Escuchar solamente SU pedido
+                // ==========================================================
+            
+                const currentOrderId =
+                    localStorage.getItem('pel_current_order_id');
+            
+                if (!currentOrderId) {
+            
+                    console.warn(
+                        'No existe pedido actual para seguimiento.'
+                    );
+            
+                    return;
+                }
+            
+                console.log(
+                    'Escuchando pedido:',
+                    currentOrderId
+                );
+            
+                this._ordersUnsubscribe =
+                    window._db
+                        .collection(this.ORDER_COLLECTION)
+                        .doc(currentOrderId)
+                        .onSnapshot(doc => {
+            
+                            if (!doc.exists) {
+            
+                                console.warn(
+                                    'El pedido ya no existe en Firestore.'
+                                );
+            
+                                return;
                             }
-                        
-                        } else {
-                        
-                            // En cliente el contador SIEMPRE representa el carrito
-                            this.updateBadge();
-                        
-                        }
-
-                        // Detectar pedidos nuevos solamente después de la carga inicial
-                        if (!this._ordersListenerReady) {
-                        
-                            // Registrar todos los pedidos que ya existían
-                            snapshot.forEach(doc => {
-                                this._knownOrderIds.add(doc.id);
-                            });
-                        
-                            // Desde ahora sí podemos detectar pedidos nuevos
-                            this._ordersListenerReady = true;
-                        
-                        } else {
-
-                            // Detectar cambios de pedidos
-                            snapshot.docChanges().forEach(change => {
-                        
-                                const id = change.doc.id;
-                        
-                                if (change.type === 'added') {
-                        
-                                    // Registrar pedido nuevo
-                                    this._knownOrderIds.add(id);
-                        
-                                    // La notificación SOLO la recibe el administrador
-                                    if (this.isAdmin) {
-                        
-                                        const data = change.doc.data();
-                        
-                                        // No notificar pedidos que ya fueron enviados
-                                        if (
-                                            data.status !== 'Pedido enviado' &&
-                                            data.status !== 'Entregado'
-                                        ) {
-                        
-                                            this.showOrderNotification(
-                                                Object.assign({ id }, data)
-                                            );
-                        
-                                        }
-                                    }
-                        
-                                } else if (change.type === 'modified') {
-                        
-                                    // El pedido cambió, por ejemplo:
-                                    // Pedido recibido → Preparando pedido
-                                    // Preparando pedido → Pedido enviado
-                        
-                                    this._knownOrderIds.add(id);
-                        
-                                } else if (change.type === 'removed') {
-                        
-                                    this._knownOrderIds.delete(id);
-                        
-                                }
-                        
-                            });
-                        }
-
-                        // If admin panel is visible, re-render the orders area
-                        if(this.isAdmin) this.renderAdminOrders();
-                    }, err => {
-                        console.error('Orders listener error', err);
-                    });
+            
+                            const order = {
+                                id: doc.id,
+                                ...doc.data()
+                            };
+            
+                            console.log(
+                                'ACTUALIZACIÓN DEL PEDIDO:',
+                                order.status
+                            );
+            
+                            // Guardar pedido actualizado
+                            this.orders = [
+                                ...this.orders.filter(
+                                    o => o.id !== order.id
+                                ),
+                                order
+                            ];
+            
+                            localStorage.setItem(
+                                'pel_orders',
+                                JSON.stringify(this.orders)
+                            );
+            
+                            // Actualizar seguimiento inmediatamente
+                            this.renderTracking();
+            
+                        }, error => {
+            
+                            console.error(
+                                'Error escuchando pedido del cliente:',
+                                error
+                            );
+            
+                        });
             }
 
             stopOrdersListener() {
