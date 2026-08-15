@@ -1772,7 +1772,6 @@
         
                     // ID interno de Firestore
                     order.id = orderRef.id;
-                    localStorage.setItem('pel_current_order_id', orderRef.id);
         
                     console.log(
                         'Pedido guardado correctamente:',
@@ -2010,14 +2009,9 @@
 
         // Usuario autorizado
         this.isAdmin = true;
+
         this.updateAdminUI();
-        
-        // Reiniciar listener para que ahora escuche como ADMIN
-        if (this._ordersUnsubscribe) {
-            this._ordersUnsubscribe();
-            this._ordersUnsubscribe = null;
-        }
-        
+
         // Escuchar pedidos en tiempo real
         this.startOrdersListener();
 
@@ -2095,134 +2089,135 @@
 
             // Start Firestore listener for orders (real-time)
             startOrdersListener() {
+                if(!window._firebaseEnabled || !window._db) {
+                    console.warn('No Firestore available to start orders listener.');
+                    return;
+                }
+                // If already subscribed, do nothing
+                if(this._ordersUnsubscribe) return;
 
-                if (!window._firebaseEnabled || !window._db) {
-                    console.warn('Firestore no disponible.');
-                    return;
-                }
-            
-                // Evitar crear varios listeners
-                if (this._ordersUnsubscribe) {
-                    return;
-                }
-            
-                // ==========================================================
-                // ADMINISTRADOR
-                // Escucha todos los pedidos
-                // ==========================================================
-            
-                if (this.isAdmin) {
-            
-                    this._ordersUnsubscribe =
-                        window._db
-                            .collection(this.ORDER_COLLECTION)
-                            .orderBy('createdAt', 'desc')
-                            .onSnapshot(snapshot => {
-            
-                                const orders = [];
-            
-                                snapshot.forEach(doc => {
-            
-                                    orders.push({
-                                        id: doc.id,
-                                        ...doc.data()
-                                    });
-            
-                                });
-            
-                                this.orders = orders;
-            
-                                localStorage.setItem(
-                                    'pel_orders',
-                                    JSON.stringify(this.orders)
-                                );
-            
-                                // Actualizar panel administrador
-                                this.renderAdminOrders();
-            
-                            }, error => {
-            
-                                console.error(
-                                    'Error listener administrador:',
-                                    error
-                                );
-            
-                            });
-            
-                    return;
-                }
-            
-                // ==========================================================
-                // CLIENTE
-                // Escuchar solamente SU pedido
-                // ==========================================================
-            
-                const currentOrderId =
-                    localStorage.getItem('pel_current_order_id');
-            
-                if (!currentOrderId) {
-            
-                    console.warn(
-                        'No existe pedido actual para seguimiento.'
-                    );
-            
-                    return;
-                }
-            
-                console.log(
-                    'Escuchando pedido:',
-                    currentOrderId
-                );
-            
-                this._ordersUnsubscribe =
-                    window._db
-                        .collection(this.ORDER_COLLECTION)
-                        .doc(currentOrderId)
-                        .onSnapshot(doc => {
-            
-                            if (!doc.exists) {
-            
-                                console.warn(
-                                    'El pedido ya no existe en Firestore.'
-                                );
-            
-                                return;
-                            }
-            
-                            const order = {
-                                id: doc.id,
-                                ...doc.data()
-                            };
-            
-                            console.log(
-                                'ACTUALIZACIÓN DEL PEDIDO:',
-                                order.status
-                            );
-            
-                            // Guardar pedido actualizado
-                            this.orders = [
-                                ...this.orders.filter(
-                                    o => o.id !== order.id
-                                ),
-                                order
-                            ];
-            
-                            localStorage.setItem(
-                                'pel_orders',
-                                JSON.stringify(this.orders)
-                            );
-            
-                            // Actualizar seguimiento inmediatamente
-                            this.renderTracking();
-            
-                        }, error => {
-            
-                            console.error(
-                                'Error escuchando pedido del cliente:',
-                                error
-                            );
-            
+                // Listen for orders ordered by createdAt desc
+                this._ordersUnsubscribe = window._db.collection(this.ORDER_COLLECTION)
+                    .orderBy('createdAt', 'desc')
+                    .onSnapshot(snapshot => {
+                        // Map docs to order objects
+                        const orders = [];
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            orders.push(Object.assign({ id: doc.id }, data));
                         });
+
+                        // Update internal orders list used by admin
+                        this.orders = orders;
+                        localStorage.setItem('pel_orders', JSON.stringify(this.orders));
+
+                        // Actualizar automáticamente el seguimiento del cliente
+                        const trackingContent = document.getElementById('trackingContent');
+                        
+                        if (
+                            trackingContent &&
+                            !trackingContent.classList.contains('d-none')
+                        ) {
+                            this.renderTracking();
+                        }
+                                                
+                        // ==========================================================
+                        // CONTADOR DEL BOTÓN CENTRAL
+                        // ==========================================================
+                        // Cliente: mostrar cantidad real del carrito.
+                        // Administrador: mostrar cantidad de pedidos pendientes.
+                        
+                        if (this.isAdmin) {
+                        
+                            const pendingCount = this.orders.filter(o => {
+                                const status = (o.status || '').toLowerCase();
+                        
+                                return (
+                                    !status ||
+                                    status === 'pedido recibido' ||
+                                    status.includes('pend')
+                                );
+                            }).length;
+                        
+                            const badge = document.getElementById('cartBadge');
+                        
+                            if (badge) {
+                                badge.style.display =
+                                    pendingCount > 0 ? 'flex' : 'none';
+                        
+                                badge.innerText = pendingCount;
+                            }
+                        
+                        } else {
+                        
+                            // En cliente el contador SIEMPRE representa el carrito
+                            this.updateBadge();
+                        
+                        }
+
+                        // Detectar pedidos nuevos solamente después de la carga inicial
+                        if (!this._ordersListenerReady) {
+                        
+                            // Registrar todos los pedidos que ya existían
+                            snapshot.forEach(doc => {
+                                this._knownOrderIds.add(doc.id);
+                            });
+                        
+                            // Desde ahora sí podemos detectar pedidos nuevos
+                            this._ordersListenerReady = true;
+                        
+                        } else {
+
+                            // Detectar cambios de pedidos
+                            snapshot.docChanges().forEach(change => {
+                        
+                                const id = change.doc.id;
+                        
+                                if (change.type === 'added') {
+                        
+                                    // Registrar pedido nuevo
+                                    this._knownOrderIds.add(id);
+                        
+                                    // La notificación SOLO la recibe el administrador
+                                    if (this.isAdmin) {
+                        
+                                        const data = change.doc.data();
+                        
+                                        // No notificar pedidos que ya fueron enviados
+                                        if (
+                                            data.status !== 'Pedido enviado' &&
+                                            data.status !== 'Entregado'
+                                        ) {
+                        
+                                            this.showOrderNotification(
+                                                Object.assign({ id }, data)
+                                            );
+                        
+                                        }
+                                    }
+                        
+                                } else if (change.type === 'modified') {
+                        
+                                    // El pedido cambió, por ejemplo:
+                                    // Pedido recibido → Preparando pedido
+                                    // Preparando pedido → Pedido enviado
+                        
+                                    this._knownOrderIds.add(id);
+                        
+                                } else if (change.type === 'removed') {
+                        
+                                    this._knownOrderIds.delete(id);
+                        
+                                }
+                        
+                            });
+                        }
+
+                        // If admin panel is visible, re-render the orders area
+                        if(this.isAdmin) this.renderAdminOrders();
+                    }, err => {
+                        console.error('Orders listener error', err);
+                    });
             }
 
             stopOrdersListener() {
@@ -2286,7 +2281,6 @@
                         const status = (o.status || '').toLowerCase();
             
                         return status !== 'pedido enviado' &&
-                               status !== 'pedido listo' &&
                                status !== 'entregado';
             
                     })
@@ -2447,11 +2441,7 @@
             
                                 <div class="admin-data-icon">
             
-                                    <i class="fas ${
-                                        o.modo === 'recojo' || o.modo === 'Recojo'
-                                            ? 'fa-store'
-                                            : 'fa-motorcycle'
-                                    }"></i>
+                                    <i class="fas fa-motorcycle"></i>
             
                                 </div>
             
@@ -2523,23 +2513,13 @@
                                     class="admin-btn admin-btn-send"
                                     onclick="window.app.updateStatusFirestore(
                                         '${o.id}',
-                                        '${(o.modo === 'recojo' || o.modo === 'Recojo')
-                                            ? 'Pedido listo'
-                                            : 'Pedido enviado'}'
+                                        'Pedido enviado'
                                     )">
-                                
-                                    <i class="fas ${
-                                        (o.modo === 'recojo' || o.modo === 'Recojo')
-                                            ? 'fa-store'
-                                            : 'fa-motorcycle'
-                                    }"></i>
-                                
-                                    ${
-                                        (o.modo === 'recojo' || o.modo === 'Recojo')
-                                            ? 'LISTO PARA RECOGER'
-                                            : 'ENVIAR'
-                                    }
-                                
+            
+                                    <i class="fas fa-motorcycle"></i>
+            
+                                    ENVIAR
+            
                                 </button>
             
                             </div>
@@ -2578,14 +2558,7 @@
             // --- History renderer (kept) ---
             renderHistory() {
                 const container = document.getElementById('adminHistoryList');
-                const historyOrders = (this.orders || []).filter(
-                    o =>
-                        o.status === 'Pedido enviado' ||
-                        o.status === 'Pedido listo' ||
-                        o.status === 'Entregado' ||
-                        (o.status && o.status.toLowerCase() === 'entregado')
-                );
-                
+                const historyOrders = (this.orders || []).filter(o => o.status === 'Pedido enviado' || o.status === 'Entregado' || (o.status && o.status.toLowerCase() === 'entregado'));
                 if(!historyOrders.length) {
                     container.innerHTML = '<p class="text-muted">No hay pedidos en el historial.</p>';
                     return;
@@ -2623,15 +2596,50 @@
                 if (!container) return;
             
                 // ==========================================================
-                // PEDIDO ACTUAL DEL CLIENTE
+                // BUSCAR SOLAMENTE PEDIDOS DEL CLIENTE ACTUAL
                 // ==========================================================
-                
-                const currentOrderId =
-                    localStorage.getItem('pel_current_order_id');
-                
-                const myLastOrder = (this.orders || []).find(
-                    o => o.id === currentOrderId
-                );
+            
+                const myOrders = (this.orders || [])
+                    .filter(o =>
+                        o.clientId === this.clientId &&
+                        (
+                            o.modo === 'delivery' ||
+                            o.modo === 'Delivery'
+                        )
+                    )
+                    .sort((a, b) => {
+            
+                        const getTime = order => {
+            
+                            if (
+                                order.createdAt &&
+                                order.createdAt.seconds
+                            ) {
+                                return order.createdAt.seconds * 1000;
+                            }
+            
+                            if (order.fecha_local) {
+                                const time =
+                                    new Date(order.fecha_local).getTime();
+            
+                                return isNaN(time) ? 0 : time;
+                            }
+            
+                            if (order.localId) {
+                                return Number(order.localId);
+                            }
+            
+                            return 0;
+                        };
+            
+                        return getTime(b) - getTime(a);
+                    });
+            
+                // ==========================================================
+                // ÚLTIMO PEDIDO DEL CLIENTE
+                // ==========================================================
+            
+                const myLastOrder = myOrders[0];
             
                 // ==========================================================
                 // NO HAY PEDIDOS
@@ -2651,7 +2659,7 @@
                                 <h3>Seguimiento de mi Pedido</h3>
             
                                 <p>
-                                    No tienes pedidos registrados.
+                                    No tienes pedidos delivery registrados.
                                 </p>
             
                             </div>
@@ -2689,31 +2697,25 @@
                             myLastOrder.fecha_local ||
                             ''
                         );
-                                        
-                // ==========================================================
-                // ESTADOS
-                // ==========================================================
             
                 const status =
                     myLastOrder.status ||
                     'Pedido recibido';
-                
-                const esRecojo =
-                    myLastOrder.modo === 'recojo' ||
-                    myLastOrder.modo === 'Recojo';
-                
+            
+                // ==========================================================
+                // ESTADOS
+                // ==========================================================
+            
                 const recibidoActivo = true;
-                
+            
                 const preparandoActivo =
                     status === 'Preparando pedido' ||
                     status === 'Pedido enviado' ||
-                    status === 'Pedido listo' ||
                     status === 'Entregado';
-                
-                const ultimoEstado =
-                    esRecojo
-                        ? status === 'Pedido listo' || status === 'Entregado'
-                        : status === 'Pedido enviado' || status === 'Entregado';
+            
+                const enviadoActivo =
+                    status === 'Pedido enviado' ||
+                    status === 'Entregado';
             
                 // ==========================================================
                 // MOSTRAR SEGUIMIENTO
@@ -2802,44 +2804,28 @@
                             </div>
             
             
-                            <!-- ÚLTIMO PASO SEGÚN TIPO DE ENTREGA -->
-
-                            <div class="tracking-step ${ultimoEstado ? 'active' : ''}">
-                            
+                            <!-- PEDIDO ENVIADO -->
+            
+                            <div class="tracking-step ${enviadoActivo ? 'active' : ''}">
+            
                                 <div class="tracking-icon">
-                            
-                                    <i class="fas ${
-                                        esRecojo
-                                            ? 'fa-store'
-                                            : 'fa-motorcycle'
-                                    }"></i>
-                            
+            
+                                    <i class="fas fa-motorcycle"></i>
+            
                                 </div>
-                            
+            
                                 <div class="tracking-info">
-                            
+            
                                     <div class="tracking-title">
-                            
-                                        ${
-                                            esRecojo
-                                                ? 'Pedido listo'
-                                                : 'Pedido enviado'
-                                        }
-                            
+                                        Pedido enviado
                                     </div>
-                            
+            
                                     <div class="tracking-description">
-                            
-                                        ${
-                                            esRecojo
-                                                ? '¡Tu pedido está listo! Puedes venir a recogerlo.'
-                                                : '¡El motorizado va en camino!'
-                                        }
-                            
+                                        ¡El motorizado va en camino!
                                     </div>
-                            
+            
                                 </div>
-                            
+            
                             </div>
             
             
@@ -3271,4 +3257,3 @@
     </script>
 </body>
 </html>
-
