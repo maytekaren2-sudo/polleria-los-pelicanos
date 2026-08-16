@@ -2061,7 +2061,10 @@
                     // ==========================================================
                     // INICIAR SESIÓN REAL EN FIREBASE AUTH
                     // ==========================================================
-            
+                        if (this._clientOrdersUnsubscribe) {
+                        this._clientOrdersUnsubscribe();
+                        this._clientOrdersUnsubscribe = null;
+                    }
                     const userCredential =
                         await window._auth.signInWithEmailAndPassword(
                             formValues.email,
@@ -2224,84 +2227,67 @@
                     return;
                 }
             
-                startClientOrdersListener() {
-
-                    if (!window._firebaseEnabled || !window._db) {
-                        console.warn('Firestore no disponible para cliente.');
-                        return;
-                    }
-                
-                    if (!this.clientUid) {
-                        console.warn('Cliente todavía no tiene UID.');
-                        return;
-                    }
-                
-                    if (this._clientOrdersUnsubscribe) {
-                        return;
-                    }
-                
-                    console.log(
-                        'Iniciando listener del cliente:',
-                        this.clientUid
-                    );
-                
-                    this._clientOrdersUnsubscribe =
-                        window._db
-                            .collection(this.ORDER_COLLECTION)
-                            .where('clientUid', '==', this.clientUid)
-                            .onSnapshot(
-                                snapshot => {
-                
-                                    const clientOrders = [];
-                
-                                    snapshot.forEach(doc => {
-                
-                                        const data = doc.data();
-                
-                                        clientOrders.push({
-                                            id: doc.id,
-                                            ...data
-                                        });
-                
+                console.log(
+                    'Iniciando listener del cliente:',
+                    this.clientUid
+                );
+            
+                this._clientOrdersUnsubscribe =
+                    window._db
+                        .collection(this.ORDER_COLLECTION)
+                        .where('clientUid', '==', this.clientUid)
+                        .onSnapshot(
+                            snapshot => {
+            
+                                const clientOrders = [];
+            
+                                snapshot.forEach(doc => {
+            
+                                    const data = doc.data();
+            
+                                    clientOrders.push({
+                                        id: doc.id,
+                                        ...data
                                     });
-                
-                                    // Actualizar pedidos del cliente
-                                    this.orders = clientOrders;
-                
-                                    // Guardar respaldo local
-                                    localStorage.setItem(
-                                        'pel_orders',
-                                        JSON.stringify(this.orders)
-                                    );
-                
-                                    console.log(
-                                        'Pedidos del cliente actualizados:',
-                                        this.orders
-                                    );
-                
-                                    // Actualizar seguimiento inmediatamente
-                                    const trackingContent =
-                                        document.getElementById('trackingContent');
-                
-                                    if (
-                                        trackingContent &&
-                                        !trackingContent.classList.contains('d-none')
-                                    ) {
-                                        this.renderTracking();
-                                    }
-                
-                                },
-                
-                                error => {
-                
-                                    console.error(
-                                        'Error escuchando pedidos del cliente:',
-                                        error
-                                    );
-                
+            
+                                });
+            
+                                // Actualizar pedidos del cliente
+                                this.orders = clientOrders;
+            
+                                // Guardar respaldo local
+                                localStorage.setItem(
+                                    'pel_orders',
+                                    JSON.stringify(this.orders)
+                                );
+            
+                                console.log(
+                                    'Pedidos del cliente actualizados:',
+                                    this.orders
+                                );
+            
+                                // Actualizar seguimiento inmediatamente
+                                const trackingContent =
+                                    document.getElementById('trackingContent');
+            
+                                if (
+                                    trackingContent &&
+                                    !trackingContent.classList.contains('d-none')
+                                ) {
+                                    this.renderTracking();
                                 }
-                            );
-                }
+            
+                            },
+            
+                            error => {
+            
+                                console.error(
+                                    'Error escuchando pedidos del cliente:',
+                                    error
+                                );
+            
+                            }
+                        );
             }
             
             
@@ -2364,11 +2350,15 @@
                     });
             }
 
-            stopOrdersListener() {
-                if(this._ordersUnsubscribe) {
-                    this._ordersUnsubscribe();
-                    this._ordersUnsubscribe = null;
+           stopOrdersListener() {
+
+                if (this._adminOrdersUnsubscribe) {
+            
+                    this._adminOrdersUnsubscribe();
+            
+                    this._adminOrdersUnsubscribe = null;
                 }
+            
                 this._knownOrderIds.clear();
             }
 
@@ -2798,6 +2788,7 @@
                         )
                     )
                     .sort((a, b) => {
+                
                         const getTime = order => {
                 
                             if (
@@ -2808,6 +2799,7 @@
                             }
                 
                             if (order.fecha_local) {
+                
                                 const time =
                                     new Date(order.fecha_local).getTime();
                 
@@ -2821,33 +2813,6 @@
                             return 0;
                         };
                 
-                        return getTime(b) - getTime(a);
-                    });
-                    .sort((a, b) => {
-            
-                        const getTime = order => {
-            
-                            if (
-                                order.createdAt &&
-                                order.createdAt.seconds
-                            ) {
-                                return order.createdAt.seconds * 1000;
-                            }
-            
-                            if (order.fecha_local) {
-                                const time =
-                                    new Date(order.fecha_local).getTime();
-            
-                                return isNaN(time) ? 0 : time;
-                            }
-            
-                            if (order.localId) {
-                                return Number(order.localId);
-                            }
-            
-                            return 0;
-                        };
-            
                         return getTime(b) - getTime(a);
                     });
             
