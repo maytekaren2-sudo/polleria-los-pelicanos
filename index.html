@@ -1323,12 +1323,7 @@
                 
                     });
                 
-                }
-                
-                // Escuchar solamente los pedidos del cliente actual
-                if (window._firebaseEnabled && window._db) {
-                    this.startClientOrdersListener();
-                }         
+                }      
             }
 
             // ==========================================================
@@ -1802,6 +1797,9 @@
                                     orderNumber: nextNumber,
                             
                                     clientId: order.clientId,
+                                 
+                                    // IMPORTANTE: identificar al usuario de Firebase
+                                    clientUid: order.clientUid,
                             
                                     items: order.items,
         
@@ -1822,6 +1820,8 @@
                                     fecha_local: order.fecha_local,
         
                                     createdAt:
+                                        firebase.firestore.FieldValue.serverTimestamp()
+                                    updatedAt:
                                         firebase.firestore.FieldValue.serverTimestamp()
                                 }
                             );
@@ -2223,54 +2223,84 @@
                     return;
                 }
             
-                this._clientOrdersUnsubscribe = window._db
-                    .collection(this.ORDER_COLLECTION)
-                    .where('clientUid', '==', this.clientUid)
-                    .onSnapshot(snapshot => {
-            
-                        const clientOrders = [];
-            
-                        snapshot.forEach(doc => {
-            
-                            const data = doc.data();
-            
-                            clientOrders.push({
-                                id: doc.id,
-                                ...data
-                            });
-            
-                        });
-            
-                        // Guardamos solamente los pedidos de este cliente
-                        this.orders = clientOrders;
-            
-                        localStorage.setItem(
-                            'pel_orders',
-                            JSON.stringify(this.orders)
-                        );
-            
-                        // Actualizar seguimiento si está abierto
-                        const trackingContent =
-                            document.getElementById('trackingContent');
-            
-                        if (
-                            trackingContent &&
-                            !trackingContent.classList.contains('d-none')
-                        ) {
-                            this.renderTracking();
-                        }
-            
-                        // En cliente el badge sigue siendo el carrito
-                        this.updateBadge();
-            
-                    }, error => {
-            
-                        console.error(
-                            'Error escuchando pedidos del cliente:',
-                            error
-                        );
-            
-                    });
+                startClientOrdersListener() {
+
+                    if (!window._firebaseEnabled || !window._db) {
+                        console.warn('Firestore no disponible para cliente.');
+                        return;
+                    }
+                
+                    if (!this.clientUid) {
+                        console.warn('Cliente todavía no tiene UID.');
+                        return;
+                    }
+                
+                    if (this._clientOrdersUnsubscribe) {
+                        return;
+                    }
+                
+                    console.log(
+                        'Iniciando listener del cliente:',
+                        this.clientUid
+                    );
+                
+                    this._clientOrdersUnsubscribe =
+                        window._db
+                            .collection(this.ORDER_COLLECTION)
+                            .where('clientUid', '==', this.clientUid)
+                            .onSnapshot(
+                                snapshot => {
+                
+                                    const clientOrders = [];
+                
+                                    snapshot.forEach(doc => {
+                
+                                        const data = doc.data();
+                
+                                        clientOrders.push({
+                                            id: doc.id,
+                                            ...data
+                                        });
+                
+                                    });
+                
+                                    // Actualizar pedidos del cliente
+                                    this.orders = clientOrders;
+                
+                                    // Guardar respaldo local
+                                    localStorage.setItem(
+                                        'pel_orders',
+                                        JSON.stringify(this.orders)
+                                    );
+                
+                                    console.log(
+                                        'Pedidos del cliente actualizados:',
+                                        this.orders
+                                    );
+                
+                                    // Actualizar seguimiento inmediatamente
+                                    const trackingContent =
+                                        document.getElementById('trackingContent');
+                
+                                    if (
+                                        trackingContent &&
+                                        !trackingContent.classList.contains('d-none')
+                                    ) {
+                                        this.renderTracking();
+                                    }
+                
+                                },
+                
+                                error => {
+                
+                                    console.error(
+                                        'Error escuchando pedidos del cliente:',
+                                        error
+                                    );
+                
+                                }
+                            );
+                }
             }
             
             
@@ -2655,16 +2685,59 @@
 
             // Update status in Firestore
             async updateStatusFirestore(id, newStatus) {
-                if(!window._firebaseEnabled || !window._db) {
-                    Swal.fire('No conectado', 'No se puede actualizar en servidor.', 'error');
+
+                if (!window._firebaseEnabled || !window._db) {
+            
+                    Swal.fire(
+                        'No conectado',
+                        'No se puede actualizar en servidor.',
+                        'error'
+                    );
+            
                     return;
                 }
+            
                 try {
-                    await window._db.collection(this.ORDER_COLLECTION).doc(id).update({ status: newStatus });
-                    Swal.fire('Estado actualizado', '', 'success');
-                } catch(err) {
-                    console.error('Error updating status', err);
-                    Swal.fire('Error', 'No se pudo actualizar el estado.', 'error');
+            
+                    await window._db
+                        .collection(this.ORDER_COLLECTION)
+                        .doc(id)
+                        .update({
+            
+                            status: newStatus,
+            
+                            updatedAt:
+                                firebase.firestore.FieldValue.serverTimestamp()
+            
+                        });
+            
+                    console.log(
+                        `Pedido ${id} actualizado a:`,
+                        newStatus
+                    );
+            
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Estado actualizado',
+                        text: newStatus,
+                        timer: 1200,
+                        showConfirmButton: false,
+                        background: '#161616',
+                        color: '#fff'
+                    });
+            
+                } catch (err) {
+            
+                    console.error(
+                        'Error updating status:',
+                        err
+                    );
+            
+                    Swal.fire(
+                        'Error',
+                        'No se pudo actualizar el estado.',
+                        'error'
+                    );
                 }
             }
 
@@ -2714,12 +2787,41 @@
             
                 const myOrders = (this.orders || [])
                     .filter(o =>
-                        o.clientId === this.clientId &&
+                        (
+                            o.clientUid === this.clientUid ||
+                            o.clientId === this.clientId
+                        ) &&
                         (
                             o.modo === 'delivery' ||
                             o.modo === 'Delivery'
                         )
                     )
+                    .sort((a, b) => {
+                        const getTime = order => {
+                
+                            if (
+                                order.createdAt &&
+                                order.createdAt.seconds
+                            ) {
+                                return order.createdAt.seconds * 1000;
+                            }
+                
+                            if (order.fecha_local) {
+                                const time =
+                                    new Date(order.fecha_local).getTime();
+                
+                                return isNaN(time) ? 0 : time;
+                            }
+                
+                            if (order.localId) {
+                                return Number(order.localId);
+                            }
+                
+                            return 0;
+                        };
+                
+                        return getTime(b) - getTime(a);
+                    });
                     .sort((a, b) => {
             
                         const getTime = order => {
