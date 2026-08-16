@@ -2296,9 +2296,11 @@
             // ESCUCHA TODOS LOS PEDIDOS
             // ==========================================================
             startAdminOrdersListener() {
-            
+
                 if (!window._firebaseEnabled || !window._db) {
-                    console.warn('Firestore no disponible para administrador.');
+                    console.warn(
+                        'Firestore no disponible para administrador.'
+                    );
                     return;
                 }
             
@@ -2306,48 +2308,148 @@
                     return;
                 }
             
-                this._adminOrdersUnsubscribe = window._db
-                    .collection(this.ORDER_COLLECTION)
-                    .orderBy('createdAt', 'desc')
-                    .onSnapshot(snapshot => {
+                // ==========================================================
+                // PREPARAR CONTROL DE PEDIDOS YA EXISTENTES
+                // ==========================================================
             
-                        const orders = [];
+                this._knownOrderIds.clear();
+                this._ordersListenerReady = false;
             
-                        snapshot.forEach(doc => {
+                console.log(
+                    'Iniciando listener administrativo...'
+                );
             
-                            const data = doc.data();
+                this._adminOrdersUnsubscribe =
+                    window._db
+                        .collection(this.ORDER_COLLECTION)
+                        .orderBy('createdAt', 'desc')
+                        .onSnapshot(
             
-                            orders.push({
-                                id: doc.id,
-                                ...data
-                            });
+                            snapshot => {
             
-                        });
+                                const orders = [];
             
-                        // Todos los pedidos para el administrador
-                        this.orders = orders;
+                                // ==================================================
+                                // ACTUALIZAR LISTA COMPLETA DE PEDIDOS
+                                // ==================================================
             
-                        localStorage.setItem(
-                            'pel_orders',
-                            JSON.stringify(this.orders)
+                                snapshot.forEach(doc => {
+            
+                                    const data = doc.data();
+            
+                                    orders.push({
+                                        id: doc.id,
+                                        ...data
+                                    });
+            
+                                });
+            
+                                this.orders = orders;
+            
+                                localStorage.setItem(
+                                    'pel_orders',
+                                    JSON.stringify(this.orders)
+                                );
+            
+                                // ==================================================
+                                // PRIMERA CARGA
+                                // NO NOTIFICAR PEDIDOS ANTIGUOS
+                                // ==================================================
+            
+                                if (!this._ordersListenerReady) {
+            
+                                    snapshot.forEach(doc => {
+            
+                                        this._knownOrderIds.add(
+                                            doc.id
+                                        );
+            
+                                    });
+            
+                                    this._ordersListenerReady = true;
+            
+                                    console.log(
+                                        'Pedidos existentes registrados. No se notifican.'
+                                    );
+            
+                                }
+            
+                                // ==================================================
+                                // CAMBIOS POSTERIORES
+                                // SOLO NOTIFICAR PEDIDOS NUEVOS
+                                // ==================================================
+            
+                                else {
+            
+                                    snapshot.docChanges().forEach(change => {
+            
+                                        // Solo nos interesa "added"
+                                        if (change.type !== 'added') {
+                                            return;
+                                        }
+            
+                                        const doc = change.doc;
+            
+                                        // Evitar duplicados
+                                        if (
+                                            this._knownOrderIds.has(
+                                                doc.id
+                                            )
+                                        ) {
+                                            return;
+                                        }
+            
+                                        // Registrar como conocido
+                                        this._knownOrderIds.add(
+                                            doc.id
+                                        );
+            
+                                        const newOrder = {
+                                            id: doc.id,
+                                            ...doc.data()
+                                        };
+            
+                                        console.log(
+                                            'NUEVO PEDIDO DETECTADO:',
+                                            newOrder
+                                        );
+            
+                                        // Mostrar notificación
+                                        if (this.isAdmin) {
+            
+                                            this.showOrderNotification(
+                                                newOrder
+                                            );
+            
+                                        }
+            
+                                    });
+            
+                                }
+            
+                                // ==================================================
+                                // ACTUALIZAR PANEL ADMINISTRATIVO
+                                // ==================================================
+            
+                                if (this.isAdmin) {
+            
+                                    this.renderAdminOrders();
+            
+                                    this.updateBadge();
+            
+                                }
+            
+                            },
+            
+                            error => {
+            
+                                console.error(
+                                    'Error escuchando pedidos del administrador:',
+                                    error
+                                );
+            
+                            }
                         );
-            
-                        // Actualizar panel administrativo
-                        if (this.isAdmin) {
-            
-                            this.renderAdminOrders();
-                            this.updateBadge();
-            
-                        }
-            
-                    }, error => {
-            
-                        console.error(
-                            'Error escuchando pedidos del administrador:',
-                            error
-                        );
-            
-                    });
             }
 
            stopOrdersListener() {
@@ -2360,48 +2462,202 @@
                 }
             
                 this._knownOrderIds.clear();
+            
+                this._ordersListenerReady = false;
+            
+                // Cerrar todas las notificaciones visibles
+                const container =
+                    document.getElementById(
+                        'orderNotifContainer'
+                    );
+            
+                if (container) {
+                    container.innerHTML = '';
+                }
             }
 
             // Show lateral notification (admin)
             showOrderNotification(order) {
-                // Build notification DOM
-                const container = document.getElementById('orderNotifContainer');
-                if(!container) return;
-                // create node
-                const node = document.createElement('div');
-                node.className = 'order-notif animate__animated';
+
+                const container =
+                    document.getElementById(
+                        'orderNotifContainer'
+                    );
+            
+                if (!container) {
+                    return;
+                }
+            
+                // ==========================================================
+                // CREAR NOTIFICACIÓN
+                // ==========================================================
+            
+                const node =
+                    document.createElement('div');
+            
+                node.className =
+                    'order-notif animate__animated';
+            
                 node.innerHTML = `
+            
                     <div class="meta">
+            
                         <div>
-                            <h4><i class="fas fa-bell" style="margin-right:8px;color:var(--accent)"></i> NUEVO PEDIDO</h4>
-                            <div class="small">Pedido #${
-                                order.orderNumber
-                                    ? String(order.orderNumber).padStart(3, '0')
-                                    : (order.id || order.localId || '').toString().slice(-6)}</div>
+            
+                            <h4>
+                                <i
+                                    class="fas fa-bell"
+                                    style="margin-right:8px;color:var(--accent)"
+                                ></i>
+            
+                                NUEVO PEDIDO
+                            </h4>
+            
+                            <div class="small">
+                                Pedido #${
+                                    order.orderNumber
+                                        ? String(
+                                            order.orderNumber
+                                        ).padStart(3, '0')
+                                        : (
+                                            order.id ||
+                                            order.localId ||
+                                            ''
+                                        ).toString().slice(-6)
+                                }
+                            </div>
+            
                         </div>
-                        <button class="notif-close" title="Cerrar">&times;</button>
+            
+                        <button
+                            class="notif-close"
+                            title="Cerrar"
+                        >
+                            &times;
+                        </button>
+            
                     </div>
+            
                     <div style="margin-top:8px;">
-                        <div class="small"><strong>Cliente:</strong> ${order.client?.name || 'No registrado'}</div>
-                        <div class="small"><strong>Modalidad:</strong> ${order.modo || order.mode || 'N/A'}</div>
-                        <div class="small"><strong>Total:</strong> S/ ${order.total ? Number(order.total).toFixed(2) : '0.00'}</div>
-                        <div class="small"><strong>Productos:</strong> ${Array.isArray(order.items) ? order.items.reduce((s,i)=>s+i.qty,0) : '0'}</div>
-                        <div class="actions">
-                            <div class="btn-notif" style="margin-top:10px;" onclick="window.app.renderAdminOrders(); window.app.changeTab('admin');">VER PEDIDO</div>
-                            <div style="display:inline-block"></div>
+            
+                        <div class="small">
+                            <strong>Cliente:</strong>
+                            ${order.client?.name || 'No registrado'}
                         </div>
+            
+                        <div class="small">
+                            <strong>Modalidad:</strong>
+                            ${order.modo || order.mode || 'N/A'}
+                        </div>
+            
+                        <div class="small">
+                            <strong>Total:</strong>
+                            S/
+                            ${
+                                order.total
+                                    ? Number(order.total).toFixed(2)
+                                    : '0.00'
+                            }
+                        </div>
+            
+                        <div class="small">
+                            <strong>Productos:</strong>
+                            ${
+                                Array.isArray(order.items)
+                                    ? order.items.reduce(
+                                        (s, i) =>
+                                            s + Number(i.qty || 0),
+                                        0
+                                    )
+                                    : 0
+                            }
+                        </div>
+            
+                        <div class="actions">
+            
+                            <button
+                                class="btn-notif btn-view-order"
+                                type="button"
+                                style="margin-top:10px;"
+                            >
+                                <i class="fas fa-eye"></i>
+                                VER PEDIDO
+                            </button>
+            
+                        </div>
+            
                     </div>
                 `;
-                // close button handler
-                node.querySelector('.notif-close').addEventListener('click', () => {
+            
+                // ==========================================================
+                // BOTÓN CERRAR
+                // ==========================================================
+            
+                const closeNotification = () => {
+            
                     node.classList.remove('show');
-                    setTimeout(()=>node.remove(), 350);
-                });
-
+            
+                    setTimeout(() => {
+            
+                        if (node.parentNode) {
+                            node.remove();
+                        }
+            
+                    }, 350);
+            
+                };
+            
+                const closeBtn =
+                    node.querySelector('.notif-close');
+            
+                if (closeBtn) {
+            
+                    closeBtn.addEventListener(
+                        'click',
+                        closeNotification
+                    );
+            
+                }
+            
+                // ==========================================================
+                // BOTÓN VER PEDIDO
+                // CIERRA LA NOTIFICACIÓN AUTOMÁTICAMENTE
+                // ==========================================================
+            
+                const viewBtn =
+                    node.querySelector('.btn-view-order');
+            
+                if (viewBtn) {
+            
+                    viewBtn.addEventListener(
+                        'click',
+                        () => {
+            
+                            // Primero cerrar notificación
+                            closeNotification();
+            
+                            // Ir al panel de pedidos
+                            this.changeTab('admin');
+            
+                            // Actualizar lista
+                            this.renderAdminOrders();
+            
+                        }
+                    );
+            
+                }
+            
+                // ==========================================================
+                // MOSTRAR NOTIFICACIÓN
+                // ==========================================================
+            
                 container.appendChild(node);
-                // trigger animation (enter from right)
-                requestAnimationFrame(()=> node.classList.add('show') );
-                // Keep until closed by admin
+            
+                requestAnimationFrame(() => {
+            
+                    node.classList.add('show');
+            
+                });
             }
 
             // --- ADMIN UI: render orders from this.orders (data from Firestore listener) ---
