@@ -25,7 +25,7 @@
             --muted: rgba(245,230,200,0.65);
             --radius: 14px;
             --max-width: 1400px;
-            --pattern-size: 360px;
+            --pattern-size: 420px;
             --nav-height: 76px;
         }
 
@@ -40,8 +40,130 @@
             margin: 0;
             padding-bottom: 140px;
             overflow-x: hidden;
-
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='360' height='360' viewBox='0 0 360 360'><g stroke='%23F5E6C8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' fill='none' stroke-opacity='0.045'><!-- drumstick --> <path d='M24 60c10-6 22-6 34 0 8 4 14 12 14 20s-6 18-14 22c-10 5-22 4-34-4C18 90 18 74 24 60z'/> <!-- wing --> <path d='M120 36c10 2 18 8 26 16 6 6 8 14 6 22-4 12-14 20-26 20-8 0-18-6-24-14-6-10-8-22-4-32 4-8 12-14 22-12z'/> <!-- whole-bird hint --> <path d='M260 26c18 2 34 12 44 26 8 12 6 26-6 38-14 14-36 20-54 12-16-6-24-22-22-38 2-16 14-30 38-38z'/> <!-- potato --> <path d='M48 180c10-6 22-4 32 4 10 8 14 20 6 30-8 10-22 14-34 8-10-6-16-18-12-30 2-8 8-14 10-12z'/> <!-- garlic bulb --> <path d='M200 170c6-6 14-8 22-6 8 2 14 8 16 16 2 10-2 20-10 26-8 6-20 6-28-2-6-6-6-16-4-28z'/> <!-- ají (pepper) --> <path d='M320 162c6-10 14-16 22-14 6 2 10 8 10 14 0 8-6 16-12 22-8 8-20 8-28 2-6-4-6-12-2-24z'/> <!-- romero simple --> <path d='M88 260c8-10 20-14 30-10 8 4 12 12 10 18-4 10-14 18-26 18-10 0-18-8-22-14'/> <!-- small flame --> <path d='M228 280c6-10 12-16 18-18 6-2 10 0 12 6 2 6 0 12-6 20-8 10-20 10-28 4'/> </g></svg>");
+        
+            /* =========================================================
+               PATRÓN DE FONDO: PIERNAS DE POLLO FRITO + ALITAS
+               ========================================================= */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420' viewBox='0 0 420 420'%3E%3Cg fill='none' stroke='%23F5E6C8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='.055'%3E
+        
+            %3C!-- PIERNA DE POLLO 1 --%3E
+            %3Cg transform='translate(45 35) rotate(-18 50 50)'%3E
+                %3Cpath d='M18 18
+                         C28 7 48 4 64 12
+                         C79 20 87 38 82 54
+                         C77 72 61 85 44 88
+                         C28 90 14 80 8 66
+                         C2 52 5 32 18 18Z'/%3E
+        
+                %3Cpath d='M42 84
+                         C43 96 39 106 31 114
+                         C25 120 20 124 14 129'/%3E
+        
+                %3Cpath d='M30 112
+                         C22 111 15 114 10 120'/%3E
+        
+                %3Cpath d='M37 110
+                         C31 117 30 123 33 130'/%3E
+            %3C/g%3E
+        
+        
+            %3C!-- ALITA 1 --%3E
+            %3Cg transform='translate(240 35) rotate(12 55 45)'%3E
+                %3Cpath d='M10 38
+                         C17 18 38 7 59 10
+                         C79 13 96 29 101 47
+                         C85 43 74 44 65 50
+                         C53 58 47 69 32 70
+                         C18 71 8 59 10 38Z'/%3E
+        
+                %3Cpath d='M25 25
+                         C40 28 52 35 61 46'/%3E
+        
+                %3Cpath d='M35 19
+                         C51 24 63 32 71 41'/%3E
+        
+                %3Cpath d='M47 17
+                         C61 22 73 28 82 37'/%3E
+            %3C/g%3E
+        
+        
+            %3C!-- ALITA 2 --%3E
+            %3Cg transform='translate(55 225) rotate(-25 55 45)'%3E
+                %3Cpath d='M8 42
+                         C16 23 35 10 56 11
+                         C76 12 95 26 103 45
+                         C88 43 76 47 67 55
+                         C55 66 49 75 34 74
+                         C18 73 7 61 8 42Z'/%3E
+        
+                %3Cpath d='M24 28
+                         C39 31 52 38 61 49'/%3E
+        
+                %3Cpath d='M35 21
+                         C51 26 64 34 73 43'/%3E
+        
+                %3Cpath d='M49 19
+                         C63 24 75 30 84 39'/%3E
+            %3C/g%3E
+        
+        
+            %3C!-- PIERNA DE POLLO 2 --%3E
+            %3Cg transform='translate(280 205) rotate(28 50 55)'%3E
+                %3Cpath d='M17 17
+                         C29 6 49 4 65 12
+                         C81 20 88 37 84 53
+                         C80 69 65 83 49 87
+                         C32 91 17 82 10 68
+                         C3 53 5 32 17 17Z'/%3E
+        
+                %3Cpath d='M47 85
+                         C50 96 47 106 39 115
+                         C32 122 28 126 21 131'/%3E
+        
+                %3Cpath d='M38 116
+                         C30 115 23 118 18 124'/%3E
+        
+                %3Cpath d='M44 114
+                         C39 121 39 127 42 133'/%3E
+            %3C/g%3E
+        
+        
+            %3C!-- PEQUEÑA ALITA --%3E
+            %3Cg transform='translate(170 290) rotate(-10 45 35)'%3E
+                %3Cpath d='M7 31
+                         C13 15 28 5 45 6
+                         C62 7 77 17 83 32
+                         C69 29 58 32 49 39
+                         C40 47 34 55 22 53
+                         C11 51 5 42 7 31Z'/%3E
+        
+                %3Cpath d='M20 20
+                         C32 23 42 29 50 38'/%3E
+        
+                %3Cpath d='M31 13
+                         C43 17 53 23 61 31'/%3E
+            %3C/g%3E
+        
+        
+            %3C!-- PEQUEÑA PIERNA --%3E
+            %3Cg transform='translate(335 330) rotate(15 35 35)'%3E
+                %3Cpath d='M12 12
+                         C20 4 34 3 45 9
+                         C56 15 60 28 56 39
+                         C52 51 41 60 29 61
+                         C17 62 7 54 4 44
+                         C1 32 4 21 12 12Z'/%3E
+        
+                %3Cpath d='M30 60
+                         C32 68 29 76 23 82
+                         C19 86 16 89 12 93'/%3E
+        
+                %3Cpath d='M23 82
+                         C18 81 14 83 11 87'/%3E
+            %3C/g%3E
+        
+            %3C/g%3E%3C/svg%3E");
+        
             background-repeat: repeat;
             background-size: var(--pattern-size);
             background-blend-mode: normal;
@@ -49,7 +171,9 @@
 
         /* Reduce patrón en móviles */
         @media (max-width: 576px){
-            :root{ --pattern-size: 280px; }
+            :root{
+                --pattern-size: 300px;
+            }
         }
 
         /* Container centrado y espaciado */
